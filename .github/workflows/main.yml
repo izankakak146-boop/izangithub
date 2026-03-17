@@ -1,4 +1,4 @@
-name: RDP-Sakti-Pasti-Bisa
+name: RDP-Sakti-V20
 on:
   workflow_dispatch:
     inputs:
@@ -15,13 +15,9 @@ jobs:
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
         choco install ngrok -y
-        $TOKEN = "${{ github.event.inputs.token }}".Trim()
-        ngrok config add-authtoken $TOKEN
+        ngrok config add-authtoken ${{ github.event.inputs.token }}
+        # Jalankan Ngrok dan biarkan saja, jangan dipaksa ambil IP biar gak error
         Start-Process ngrok -ArgumentList "tcp --region ap 3389"
-        Write-Host "Sabar Bos, nunggu 60 detik biar koneksi stabil..."
-        Start-Sleep -Seconds 60
-        # Coba tampilin alamat di log lagi
-        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
-        Write-Host "ALAMAT RDP: $($api.tunnels[0].public_url)"
+        Write-Host "MESIN SUDAH NYALA! JANGAN LIHAT LOG LAGI!"
         while($true){ Start-Sleep 60 }
         
