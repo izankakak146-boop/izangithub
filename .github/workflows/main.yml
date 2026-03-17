@@ -29,7 +29,7 @@ jobs:
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
         # 4. Login Tailscale (GANTI AUTH_KEY KAMU DI SINI)
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey TS_AUTH_KEY --accept-routes
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kYfbSQtUB821CNTRL-hBWhGPCgXKjGSzz19D6zKjfkwsx3Pu7N --accept-routes
         
         # 5. Restart Service
         net stop "TightVNC Server"; net start "TightVNC Server"
