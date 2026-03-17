@@ -1,51 +1,54 @@
-name: ANYDESK-TAILSCALE-IZAN-FIX
+name: ANYDESK-TAILSCALE-SAKTI-IZAN
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-AnyDesk-dan-Tailscale
+    - name: Eksekusi-Jurus-Sakti
       shell: pwsh
       run: |
         # 1. Download AnyDesk
+        Write-Host "Sedang mendownload AnyDesk..."
         iwr https://download.anydesk.com/AnyDesk.exe -OutFile AnyDesk.exe
         
-        # 2. JURUS SAKTI: Instal AnyDesk secara resmi (Biar Gak ERROR Service)
+        # 2. Instal AnyDesk ke Sistem (Biar Gak Error Service)
+        Write-Host "Menginstal AnyDesk secara resmi..."
         Start-Process ./AnyDesk.exe -ArgumentList "--install `"C:\Program Files (x86)\AnyDesk`" --start-with-win --silent" -Wait
         
-        # 3. Kasih napas 15 detik biar AnyDesk bangun
-        Start-Sleep -Seconds 15
+        # 3. Masuk ke Folder Instalasi & Set Password 'izan123'
+        cd "C:\Program Files (x86)\AnyDesk"
+        echo "izan123" | ./AnyDesk.exe --set-password
         
-        # 4. Set Password 'izan123' (Gampang diingat!)
-        echo "izan123" | & "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --set-password
+        # 4. Ambil ID AnyDesk (Jeda 20 detik biar server Google/GitHub nyambung)
+        Write-Host "Menunggu AnyDesk siap di server..."
+        Start-Sleep -Seconds 20
+        $anyid = ./AnyDesk.exe --get-id
         
-                # 5. JURUS PANCINGAN ID (Tanya terus sampe dapet!)
-        $anyid = ""
-        while (-not $anyid) {
-          Write-Host "Sedang memancing ID AnyDesk dari server... Tunggu ya Bos..."
-          $anyid = & "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --get-id
-          if (-not $anyid) { Start-Sleep -Seconds 5 }
+        # Cetak Hasil ke Log biar Gampang Dilihat
+        Write-Host "===================================="
+        if ($anyid) {
+            Write-Host "ID ANYDESK KAMU: $anyid"
+        } else {
+            Write-Host "ID BELUM MUNCUL DI LOG"
+            Write-Host "TAPI JANGAN PANIK, CEK TAILSCALE IP!"
         }
-        
-        Write-Host "==========================="
-        Write-Host "ID ANYDESK KAMU: $anyid"
         Write-Host "PASSWORD: izan123"
-        Write-Host "==========================="
+        Write-Host "===================================="
         
-        
-        # 6. Pasang Tailscale (Jalur Favorit Kamu)
+        # 5. Pasang Tailscale (Backup Utama Bos!)
+        Write-Host "Mengaktifkan Tailscale..."
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
-        # 7. Login Tailscale (GANTI 'TS_AUTH_KEY' PAKAI PUNYA KAMU!)
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey TS_AUTH_KEY --accept-routes
+        # GANTI 'TS_AUTH_KEY' DENGAN PUNYA KAMU DI BAWAH INI:
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kDciJMstZt11CNTRL-nNmwmoe4wt59a1UXbMk5u5H1j41nre1j7 --accept-routes
         
-        Write-Host "Koneksi Berhasil! Mesin akan Online selama 60 Menit."
-
-        # 8. JURUS PENAHAN MELEK (Biar Gak Offline Sendiri)
+        Write-Host "SEMUA SIAP! Mesin akan Online selama 60 Menit."
+        
+        # 6. Penahan Melek (Bukan Spam)
         $timeout = 60
         for ($i = 1; $i -le $timeout; $i++) {
-          Write-Host "Menjaga koneksi... Menit ke-$i"
+          Write-Host "Menjaga koneksi tetap hidup... Menit ke-$i"
           Start-Sleep -Seconds 60
-        } 
+        }
         
