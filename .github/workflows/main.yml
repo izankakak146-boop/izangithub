@@ -1,21 +1,24 @@
-name: RDP-SERVEO-FINAL-BOSS
+name: RDP-ZEROTIER-BUKAN-TUNNEL
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Serveo
+    - name: Pasang-ZeroTier-Sakti
       shell: pwsh
       run: |
-        Write-Host "=============================="
-        Write-Host "MEMBUKA JALUR SERVEO (ANTI MUTER)"
-        Write-Host "=============================="
+        Write-Host "Menginstal ZeroTier..."
+        $url = "https://download.zerotier.com/dist/ZeroTier%20One.msi"
+        bitsadmin /transfer ZTDownload /download /priority FOREGROUND $url "$PWD\zt.msi"
+        Start-Process msiexec.exe -ArgumentList "/i zt.msi /quiet /norestart" -Wait
         
-        # Mengaktifkan RDP di sistem
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Write-Host "Menghubungkan ke Network..."
+        # GANTI ID_NETWORK_KAMU dengan 16 digit ID dari web ZeroTier
+        $networkId = "ID_NETWORK_KAMU"
+        & "C:\Program Files (x86)\ZeroTier\One\zerotier-one_x64.exe" -q join $networkId
         
-        Write-Host "Menghubungkan ke terowongan..."
-        # Ini perintah saktinya, langsung tembus tanpa instal apa-apa
-        ssh -o StrictHostKeyChecking=no -R 80:localhost:3389 serveo.net
+        Write-Host "=============================="
+        Write-Host "CEK PANEL ZEROTIER DAN CENTANG 'AUTH'!"
+        Write-Host "=============================="
+        Start-Sleep -Seconds 21600
         
