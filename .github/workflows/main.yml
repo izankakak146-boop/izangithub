@@ -1,21 +1,48 @@
-name: RDP-Sakti-Fix
-on: workflow_dispatch
+name: RDP-Sakti-Input-Token
+on:
+  workflow_dispatch:
+    inputs:
+      ngrok_token:
+        description: 'Tempel Token Ngrok Kamu di Sini'
+        required: true
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gas
+    - name: Gaspol
       shell: pwsh
       run: |
+        # 1. Buat User RDP
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
-        # Pakai Chocolatey biar download-nya otomatis dan gak gampang mati linknya
-        choco install ngrok
-        ngrok config add-authtoken3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
+        
+        # 2. Install Ngrok
+        choco install ngrok -y
+        
+        # 3. Pakai Token dari Input
+        $TOKEN = "${{ github.event.inputs.ngrok_token }}".Trim()
+        ngrok config add-authtoken $TOKEN
+        
+        # 4. Jalankan Tunnel
         Start-Process ngrok -ArgumentList "tcp 3389"
-        Write-Host "Tunggu 15 detik biar tunnel konek..."
-        Start-Sleep -Seconds 15
-        $tunnels = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
-        Write-Host "ALAMAT RDP KAMU: $($tunnels.tunnels[0].public_url)"
-        while($true){ Write-Host "Windows Aktif..."; Start-Sleep -Seconds 60 }
+        Write-Host "Sabar Bos, lagi nyambungin kabel..."
+        Start-Sleep -Seconds 20
+        
+        # 5. Ambil Alamat RDP
+        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels
+        if ($api -like "*public_url*") {
+          $json = $api | ConvertFrom-Json
+          $url = $json.tunnels[0].public_url
+          Write-Host "-------------------------------------"
+          Write-Host "ALAMAT RDP: $url"
+          Write-Host "USER: runneradmin | PASS: Sakti123!"
+          Write-Host "-------------------------------------"
+        } else {
+          Write-Host "GAGAL! Token salah atau Ngrok ngambek."
+          exit 1
+        }
+        
+        # 6. Jaga tetap hidup
+        while($true){ Start-Sleep -Seconds 60 }
         
