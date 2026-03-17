@@ -1,22 +1,27 @@
-name: RDP-TMATE-BEBAS-AKUN
+name: RDP-ANYDESK-GAS
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Nyalakan-Akses
+    - name: Nyalakan-AnyDesk
       shell: pwsh
       run: |
-        # Ambil program tmate
-        curl.exe -fL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz -o tmate.tar.xz
-        # Eh ini Windows, kita pake versi chocolatey aja biar gak ribet download manual
-        choco install tmate -y
+        # 1. Download AnyDesk
+        Invoke-WebRequest -Uri "https://download.anydesk.com/AnyDesk.exe" -OutFile "AnyDesk.exe"
+        
+        # 2. Jalankan AnyDesk dan set password biar kamu bisa langsung masuk
+        # Passwordnya: Sakti123!
+        echo "Sakti123!" | .\AnyDesk.exe --set-password
+        
+        # 3. Ambil ID AnyDesk mesin ini
+        Start-Sleep -Seconds 5
+        .\AnyDesk.exe --get-id
         
         Write-Host "=============================="
-        Write-Host "TUNGGU BENTAR, LAGI NYARI JALUR..."
+        Write-Host "TUNGGU ID ANYDESK MUNCUL DI ATAS..."
         Write-Host "=============================="
         
-        # Jalankan tmate
-        tmate -F
+        while($true){ Start-Sleep 60 }
         
