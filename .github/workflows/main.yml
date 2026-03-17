@@ -1,27 +1,17 @@
-name: RDP-PINGGY-FINAL
+name: RDP-PINGGY-MURNI
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Set-User
-      shell: pwsh
-      run: |
-        # Membuat user admin
-        net user runneradmin Sakti123! /add
-        net localgroup administrators runneradmin /add
-        Write-Host "User runneradmin berhasil dibuat!"
-
     - name: Jalankan-Pinggy
       shell: pwsh
       run: |
         Write-Host "=============================="
-        Write-Host "SEDANG MEMBUKA TEROWONGAN PINGGY..."
-        Write-Host "TUNGGU 15 DETIK SAMPAI ALAMAT MUNCUL"
+        Write-Host "MEMBUKA JALUR TANPA BIKIN USER"
         Write-Host "=============================="
         
-        # Menjalankan SSH Tunnel Pinggy ke port RDP (3389)
-        # Kami pakai port 443 karena biasanya lebih stabil menembus firewall GitHub
+        # Langsung tembak port RDP (3389)
         ssh -o StrictHostKeyChecking=no -p 443 -R0:localhost:3389 a.pinggy.io
         
