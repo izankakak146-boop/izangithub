@@ -1,28 +1,26 @@
-name: RDP-PASTI-TEMBUS
+name: RDP-LOCALTONET-PASTI-BISA
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Nyalain Mesin
+    - name: Setup-Localtonet
       shell: pwsh
       run: |
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
-        choco install ngrok -y
-        # MASUKKAN TOKEN KAMU LANGSUNG DI BAWAH INI
-        ngrok config add-authtoken3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
-        
-        Start-Process ngrok -ArgumentList "tcp --region ap 3389"
-        Write-Host "MESIN SUDAH JALAN!"
-        
-        # Kita paksa ambil alamat dari dalam mesin biar gak usah buka web
-        Start-Sleep -Seconds 30
-        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
+        # Download Localtonet
+        Invoke-WebRequest -Uri "https://localtonet.com/download/localtonet-windows-x64.zip" -OutFile "lt.zip"
+        Expand-Archive -Path "lt.zip" -DestinationPath "C:\lt"
+        cd C:\lt
+        # Jalankan dengan Token kamu
+        # GANTI_TOKEN_DI_BAWAH
+        ./localtonet.exe -t tSUr5yD0dTXHLKhfuMFP24b7cqCBsai8N &
+        Start-Sleep -Seconds 20
         Write-Host "=============================="
-        Write-Host "ALAMAT RDP: $($api.tunnels[0].public_url)"
+        Write-Host "CEK DASHBOARD LOCALTONET DI WEB"
+        Write-Host "BAGIAN 'MY TUNNELS' -> TCP"
         Write-Host "=============================="
-        
         while($true){ Start-Sleep 60 }
         
