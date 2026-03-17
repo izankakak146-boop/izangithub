@@ -19,12 +19,19 @@ jobs:
         # 4. Set Password 'izan123' (Gampang diingat!)
         echo "izan123" | & "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --set-password
         
-        # 5. Ambil ID AnyDesk & Cetak ke Log
-        $anyid = & "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --get-id
+                # 5. JURUS PANCINGAN ID (Tanya terus sampe dapet!)
+        $anyid = ""
+        while (-not $anyid) {
+          Write-Host "Sedang memancing ID AnyDesk dari server... Tunggu ya Bos..."
+          $anyid = & "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --get-id
+          if (-not $anyid) { Start-Sleep -Seconds 5 }
+        }
+        
         Write-Host "==========================="
         Write-Host "ID ANYDESK KAMU: $anyid"
         Write-Host "PASSWORD: izan123"
         Write-Host "==========================="
+        
         
         # 6. Pasang Tailscale (Jalur Favorit Kamu)
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
