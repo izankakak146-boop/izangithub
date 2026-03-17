@@ -1,4 +1,4 @@
-name: RDP-PLAYIT-PASTI-TEMBUS
+name: RDP-PLAYIT-V2
 on:
   workflow_dispatch:
 jobs:
@@ -8,14 +8,14 @@ jobs:
     - name: Gaspol-Playit
       shell: pwsh
       run: |
-        Write-Host "Memasang kabel data Playit..."
-        # Download Playit
-        Invoke-WebRequest -Uri https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-amd64.exe -OutFile playit.exe
+        Write-Host "Sedang mengambil file asli Playit..."
+        # Download versi Portable langsung dari server rilis
+        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-amd64.exe" -OutFile "playit.exe"
         
         Write-Host "=============================="
-        Write-Host "KLIK LINK DI BAWAH BUAT AKTIFIN"
+        Write-Host "TUNGGU LINK AKTIVASI MUNCUL..."
         Write-Host "=============================="
         
-        # Jalankan Playit
+        # Jalankan tanpa install
         ./playit.exe
         
