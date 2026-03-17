@@ -1,23 +1,22 @@
-name: RDP-LOCALTUNNEL-IP-PASTI
+name: RDP-BORE-ANTI-NGROK
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Localtunnel
+    - name: Gaspol-Bore
       shell: pwsh
       run: |
+        Write-Host "Lagi pasang pipa sakti..."
+        # Download Bore (Tunnel paling ringan sedunia)
+        Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-pc-windows-msvc.zip -OutFile bore.zip
+        Expand-Archive bore.zip
+        
         Write-Host "=============================="
-        Write-Host "NIHHH PASSWORD TUNNEL KAMU:"
-        # Pakai --silent biar gak banyak sampah log, langsung angka IP-nya aja
-        $myip = curl.exe --silent https://ifconfig.me
-        Write-Host $myip
+        Write-Host "TUNGGU ALAMATNYA MUNCUL DI BAWAH"
         Write-Host "=============================="
         
-        Write-Host "Lagi instal terowongan..."
-        npm install -g localtunnel
-        
-        Write-Host "TUNGGU LINKNYA MUNCUL DI BAWAH"
-        lt --port 3389
+        # Jalankan Bore langsung ke port RDP
+        ./bore.exe local 3389 --to bore.pub
         
