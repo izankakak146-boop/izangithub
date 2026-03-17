@@ -1,32 +1,19 @@
-name: Windows-Sakti-Final
-on:
-  workflow_dispatch:
-    inputs:
-      auth_code:
-        description: 'Tempel HANYA Kode Otorisasinya (yang ada di dalam --code="...")'
-        required: true
-
+name: RDP-Sakti
+on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: 1. Install Chrome Remote Desktop
+    - name: Gas
       run: |
-        $URL = "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi"
-        Invoke-WebRequest $URL -OutFile "crd.msi"
-        Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn" -Wait
-
-    - name: 2. Eksekusi Langsung
-      shell: pwsh
-      run: |
-        & "${Env:ProgramFiles(x86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="${{ github.event.inputs.auth_code }}" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME -Pin 123456
-
-    - name: 3. Jaga Server
-      run: |
-        $i = 0
-        while($i -lt 360) {
-          Write-Host "Windows Nyala... Menit ke-$i"
-          Start-Sleep -Seconds 60
-          $i++
-        }
+        net user runneradmin Sakti123! /add
+        net localgroup administrators runneradmin /add
+        Invoke-WebRequest https://bin.equinox.io/c/b342P99d8D8/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+        Expand-Archive ngrok.zip
+        .\ngrok.exe authtoken3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
+        Start-Process .\ngrok.exe -ArgumentList "tcp 3389"
+        echo "TUNGGU 10 DETIK..."
+        Start-Sleep -Seconds 10
+        curl http://127.0.0.1:4040/api/tunnels
+        while($true){ echo "Aktif..."; Start-Sleep -Seconds 60 }
         
