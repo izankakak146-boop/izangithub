@@ -1,21 +1,18 @@
-name: RDP-FINAL-JALUR-SISTEM
+name: RDP-CLOUDFLARE-FINAL-STABIL
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Buka-Gerbang-Asli
+    - name: Gaspol-Tanpa-Download
       shell: pwsh
       run: |
-        Write-Host "Mengaktifkan fitur RDP bawaan..."
+        Write-Host "Mengambil jalur VIP Cloudflare..."
+        # Mengaktifkan RDP di Windows
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         
-        Write-Host "=============================="
-        Write-Host "MENGHUBUNGKAN JALUR RAHASIA..."
-        Write-Host "=============================="
-        
-        # Kita pakai SSH murni, tidak ada file .exe yang didownload
-        # Kita pakai port 443 (jalur HTTPS) biar dikira traffic web biasa
-        ssh -o StrictHostKeyChecking=no -R 80:localhost:3389 serveo.net
+        # Langsung jalankan tanpa simpan file .exe
+        iwr -useb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
+        ./cloudflared.exe tunnel --url tcp://localhost:3389
         
