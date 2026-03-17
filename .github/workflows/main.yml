@@ -1,33 +1,21 @@
-name: RDP-NGROK-BRUTAL
+name: RDP-LOCALTUNNEL-BEBAS
 on:
   workflow_dispatch:
-    inputs:
-      auth:
-        description: 'Masukkan Ngrok Authtoken'
-        required: true
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Ngrok
+    - name: Gaspol-Localtunnel
       shell: pwsh
       run: |
-        # 1. Download Ngrok murni
-        curl.exe -fL https://bin.equinox.io/c/bNy9KvX7Ba8/ngrok-v3-stable-windows-amd64.zip -o ngrok.zip
-        Expand-Archive ngrok.zip
+        Write-Host "Lagi instal terowongan..."
+        # Instal localtunnel lewat npm (pasti ada di github)
+        npm install -g localtunnel
         
-        # 2. Set Authtoken dari Input
-        $token = "${{ github.event.inputs.auth }}"
-        ./ngrok/ngrok.exe config add-authtoken $token
+        Write-Host "=============================="
+        Write-Host "TUNGGU LINKNYA MUNCUL DI BAWAH"
+        Write-Host "=============================="
         
-        Write-Host "Membuka jalur TCP murni..."
-        
-        # 3. Jalankan tunnel TCP (bukan HTTP)
-        Start-Process ./ngrok/ngrok.exe -ArgumentList "tcp 3389" -RedirectStandardOutput "log.txt"
-        
-        Start-Sleep -Seconds 20
-        # Ambil alamat tcp://0.tcp.ngrok.io:XXXXX
-        Get-Content log.txt | Select-String "tcp://"
-        
-        while($true){ Start-Sleep 60 }
+        # Buka jalur RDP (3389)
+        lt --port 3389
         
