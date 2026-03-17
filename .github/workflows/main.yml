@@ -1,22 +1,15 @@
-name: RDP-BORE-ANTI-NGROK
+name: RDP-SSH-MURNI-GAS
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Bore
+    - name: Nyalakan-Akses
       shell: pwsh
       run: |
-        Write-Host "Lagi pasang pipa sakti..."
-        # Download Bore (Tunnel paling ringan sedunia)
-        Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-pc-windows-msvc.zip -OutFile bore.zip
-        Expand-Archive bore.zip
-        
-        Write-Host "=============================="
-        Write-Host "TUNGGU ALAMATNYA MUNCUL DI BAWAH"
-        Write-Host "=============================="
-        
-        # Jalankan Bore langsung ke port RDP
-        ./bore.exe local 3389 --to bore.pub
+        Write-Host "Membuka jalur murni lewat localhost.run..."
+        # Langsung buka terowongan tanpa install apapun
+        # Link akan muncul di log di bawah
+        ssh -o StrictHostKeyChecking=no -R 80:localhost:3389 nokey@localhost.run
         
