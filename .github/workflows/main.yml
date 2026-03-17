@@ -1,20 +1,26 @@
-name: RDP-CLOUDFLARE-PASTI-JALAN
+name: RDP-TAILSCALE-ANTI-RIBET
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol
+    - name: Setup-User
+      run: |
+        net user runneradmin Sakti123! /add
+        net localgroup administrators runneradmin /add
+    - name: Pasang-Tailscale
       shell: pwsh
       run: |
-        # Download Cloudflared
-        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi" -OutFile "cf.msi"
-        Start-Process msiexec.exe -ArgumentList "/i cf.msi /quiet" -Wait
+        # Instal Tailscale tanpa ribet
+        curl.exe -fL https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
+        Start-Process .\tailscale-setup.exe -ArgumentList "/quiet" -Wait
         
-        # Jalankan Tunnel RDP
-        Write-Host "=============================="
-        Write-Host "TUNGGU ALAMATNYA MUNCUL DI BAWAH..."
-        Write-Host "=============================="
-        & "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url tcp://localhost:3389
+        # Jalankan dan minta Link Login
+        Write-Host "===================================="
+        Write-Host "KLIK LINK DI BAWAH UNTUK LOGIN!"
+        Write-Host "===================================="
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kkuDvwF8hi11CNTRL-71RcKBVeKJ98PfFVGyJsH97Vd7B9rgiXL
+        
+        while($true){ Start-Sleep 60 }
         
