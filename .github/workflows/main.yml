@@ -1,28 +1,32 @@
-name: CRD-ANTI-OFFLINE-IZAN
+name: ANYDESK-TAILSCALE-IZAN
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-Chrome-Remote-Desktop
+    - name: Pasang-AnyDesk-dan-Tailscale
       shell: pwsh
       run: |
-        # 1. Download & Install CRD Host
-        $url = "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi"
-        bitsadmin /transfer CRDDownload /download /priority FOREGROUND $url "$PWD\crd.msi"
-        Start-Process msiexec.exe -ArgumentList "/i crd.msi /quiet /norestart" -Wait
+        # 1. Download & Pasang AnyDesk
+        iwr https://download.anydesk.com/AnyDesk.exe -OutFile AnyDesk.exe
         
-        # 2. TEMPAT NARUH CRP (Sesuai Pesanan Bos!)
-        # HAPUS BARIS DI BAWAH INI DAN TEMPEL KODE PANJANG DARI GOOGLE:
-        & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepAvgCSGq4Uh3COUs4IuyRO-45rFNcGnDQ9yhLHWjZrHHEVHd5ZxjxGf5GZpSR3OyQ" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+        # 2. Set Password AnyDesk jadi 'izan123'
+        echo "izan123" | ./AnyDesk.exe --set-password
         
-        Write-Host "CRD Berhasil Dinyalakan! Menjaga mesin agar tidak offline..."
+        # 3. Jalankan AnyDesk di background
+        Start-Process ./AnyDesk.exe --service
         
-        # 3. JURUS PENAHAN (Biar gak offline setelah 1 menit)
-        $i = 0
-        while($i -lt 30) {
-          Write-Host "Menjaga koneksi tetap melek... Menit ke-$i"
-          Start-Sleep -Seconds 60
-          $i++
-        }
+        # 4. Ambil ID AnyDesk biar muncul di log
+        ./AnyDesk.exe --get-id
+        
+        # 5. Pasang Tailscale (Jalur Utama Kamu)
+        iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
+        Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
+        
+        # 6. Login Tailscale (GANTI AUTH_KEY KAMU)
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey TS_AUTH_KEY --accept-routes
+        
+        Write-Host "ANYDESK SIAP! Pass: izan123"
+        # Menjaga koneksi 60 menit
+        $i = 0; while($i -lt 60) { Write-Host "Melek menit ke-$i"; Start-Sleep -Seconds 60; $i++ }
         
