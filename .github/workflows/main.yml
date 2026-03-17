@@ -1,26 +1,23 @@
-name: RDP-TANPA-RIBET-GAS
+name: RDP-SERVEO-FINAL
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Jalankan-Tunnel-Kilat
+    - name: Gaspol-Serveo
       shell: pwsh
       run: |
-        # Download Cloudflare
-        curl.exe -fL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -o cloudflared.exe
+        Write-Host "Lagi buka jalur murni..."
+        # Langsung tembak tunnel tanpa install apa-apa
+        Start-Process ssh -ArgumentList "-o StrictHostKeyChecking=no -R 80:localhost:3389 serveo.net" -RedirectStandardOutput "link.txt"
         
         Write-Host "=============================="
-        Write-Host "LAGI NYIAPIN LINK... TUNGGU 30 DETIK"
+        Write-Host "TUNGGU 20 DETIK..."
         Write-Host "=============================="
         
-        # Jalankan tunnel mode TCP untuk RDP
-        Start-Process ./cloudflared.exe -ArgumentList "tunnel --url tcp://localhost:3389" -RedirectStandardOutput "link.txt"
-        
-        # Tunggu bentar terus tampilin linknya
-        Start-Sleep -Seconds 25
-        Get-Content link.txt | Select-String "trycloudflare.com"
+        Start-Sleep -Seconds 20
+        Get-Content link.txt
         
         while($true){ Start-Sleep 60 }
         
