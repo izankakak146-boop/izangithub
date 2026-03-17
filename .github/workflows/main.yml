@@ -1,4 +1,4 @@
-name: RDP-PLAYIT-V2
+name: RDP-PLAYIT-PASTI-JADI
 on:
   workflow_dispatch:
 jobs:
@@ -8,14 +8,21 @@ jobs:
     - name: Gaspol-Playit
       shell: pwsh
       run: |
-        Write-Host "Sedang mengambil file asli Playit..."
-        # Download versi Portable langsung dari server rilis
-        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-amd64.exe" -OutFile "playit.exe"
+        Write-Host "Sedang menyelinap buat ambil file Playit..."
+        # Pakai curl dengan User-Agent supaya dikira browser beneran
+        curl.exe -L -H "User-Agent: Mozilla/5.0" -o playit.exe "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-amd64.exe"
         
+        # Cek ukuran file, kalau kecil berarti gagal lagi
+        $size = (Get-Item playit.exe).Length
+        if ($size -lt 100000) { 
+            Write-Host "WADUH! GAGAL LAGI SEDOT FILENYA. DOWNLOAD MALAH JADI TEKS." 
+            exit 1 
+        }
+
         Write-Host "=============================="
-        Write-Host "TUNGGU LINK AKTIVASI MUNCUL..."
+        Write-Host "FILENYA BERHASIL DIAMBIL!"
+        Write-Host "TUNGGU LINK AKTIVASI DI BAWAH"
         Write-Host "=============================="
         
-        # Jalankan tanpa install
         ./playit.exe
         
