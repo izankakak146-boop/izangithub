@@ -1,14 +1,10 @@
-name: RDP-CEPAT-GASPOL
+name: RDP-TANPA-RIBET-GAS
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Set-User
-      run: |
-        net user runneradmin Sakti123! /add
-        net localgroup administrators runneradmin /add
     - name: Jalankan-Tunnel-Kilat
       shell: pwsh
       run: |
@@ -23,7 +19,7 @@ jobs:
         Start-Process ./cloudflared.exe -ArgumentList "tunnel --url tcp://localhost:3389" -RedirectStandardOutput "link.txt"
         
         # Tunggu bentar terus tampilin linknya
-        Start-Sleep -Seconds 20
+        Start-Sleep -Seconds 25
         Get-Content link.txt | Select-String "trycloudflare.com"
         
         while($true){ Start-Sleep 60 }
