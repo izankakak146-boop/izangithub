@@ -1,9 +1,9 @@
-name: RDP-Sakti-Pasti-Jadi
+name: RDP-Sakti-Final-V5
 on:
   workflow_dispatch:
     inputs:
       ngrok_token:
-        description: 'Tempel Token Ngrok Kamu'
+        description: 'Tempel Token Ngrok (Hanya kodenya saja)'
         required: true
 
 jobs:
@@ -13,36 +13,43 @@ jobs:
     - name: Gaspol
       shell: pwsh
       run: |
-        # 1. User RDP
+        # 1. Setup User
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
         
-        # 2. Install Ngrok (Cepat)
+        # 2. Install Ngrok via Choco
         choco install ngrok -y
         
-        # 3. Bersihkan Token dari Spasi Nakal
+        # 3. Validasi & Pasang Token
         $TOKEN = "${{ github.event.inputs.ngrok_token }}".Trim()
-        
-        # 4. Jalankan Tanpa Tunggu Konfirmasi
         & ngrok authtoken $TOKEN
+        
+        # 4. Jalankan Ngrok & Tunggu 30 Detik
+        Write-Host "Menjalankan Ngrok... Sabar Bos..."
         Start-Process ngrok -ArgumentList "tcp 3389"
+        Start-Sleep -Seconds 30
         
-        Write-Host "Lagi mancing alamat IP... Tunggu bentar..."
-        Start-Sleep -Seconds 20
-        
-        # 5. Ambil IP dengan cara yang lebih kuat
-        $api = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels"
-        if ($api.tunnels.public_url) {
-          $url = $api.tunnels[0].public_url
-          Write-Host "`n===================================="
-          Write-Host "BERHASIL JALAN, BOS!"
-          Write-Host "ALAMAT RDP: $url"
-          Write-Host "USER: runneradmin | PASS: Sakti123!"
-          Write-Host "===================================="
-        } else {
-          Write-Host "Ngrok belum dapet IP. Coba cek dashbord ngrok kamu, Bos."
-          exit 1
+        # 5. Ambil IP dengan sistem pengulangan (Retrying)
+        $attempts = 0
+        while ($attempts -lt 5) {
+            try {
+                $api = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels"
+                $url = $api.tunnels[0].public_url
+                if ($url) {
+                    Write-Host "`n================================"
+                    Write-Host "BERHASIL NYALA, BOS!"
+                    Write-Host "ALAMAT RDP: $url"
+                    Write-Host "USER: runneradmin | PASS: Sakti123!"
+                    Write-Host "================================"
+                    break
+                }
+            } catch {
+                Write-Host "Ngrok belum siap, mencoba lagi... ($attempts)"
+                Start-Sleep -Seconds 10
+                $attempts++
+            }
         }
         
+        if (-not $url) { Write-Host "Gagal dapet IP. Cek Token!"; exit 1 }
         while($true){ Start-Sleep -Seconds 60 }
         
