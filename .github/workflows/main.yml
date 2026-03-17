@@ -33,7 +33,7 @@ jobs:
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
         # MASUKKAN KEY TAILSCALE KAMU DI SINI
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kBdSTCmdbm11CNTRL-kY5RzvhucXLsSRcNCgdAXLXeLNvPQ46P8 --accept-routes
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-k5DcHC8arF11CNTRL-TDT4oPVaBejcbyMJYxJjdjHZfavDNxfj8 --accept-routes
         
         # Tahan melek 60 menit
         $i = 0; while($i -lt 60) { Start-Sleep -Seconds 60; $i++ }
