@@ -1,24 +1,32 @@
-name: RDP-FINAL-BOSS-PASTI-JADI
-on:
-  workflow_dispatch:
+name: RDP-TAILSCALE-REBORN
+on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Final
+    - name: Pasang-Tailscale
       shell: pwsh
       run: |
-        Write-Host "Lagi instal terowongan sakti..."
-        # Instal localtunnel lewat npm (pasti berhasil karena ini jalur resmi)
-        npm install -g localtunnel
+        Write-Host "Sedang menjinakkan Tailscale..."
+        # Download & Install versi terbaru
+        Invoke-WebRequest https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile tailscale.exe
+        Start-Process .\tailscale.exe -ArgumentList "/quiet /norestart" -Wait
         
         Write-Host "=============================="
-        Write-Host "PASSWORD TUNNEL KAMU (CATAT!):"
-        # Mengambil IP Public buat password bypass localtunnel
-        curl.exe ifconfig.me
-        Write-Host "`n=============================="
+        Write-Host "MENYAMBUNGKAN KE JARINGAN..."
+        Write-Host "=============================="
         
-        Write-Host "Membuka jalur RDP..."
-        # Langsung tembak port RDP (3389)
-        lt --port 3389
+        # Jalankan dengan Auth Key kamu
+        # Masukkan Key kamu di bawah ini (yang depannya 'tskey-auth-xxxx')
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=tskey-auth-kVPwv3ufK511CNTRL-JJXAcrJHr9QMaHHMo8Xh9QJXdaKc1simN
+        
+        # Cek status buat buktiin dia nggak bohong
+        & "C:\Program Files\Tailscale\tailscale.exe" status
+        
+        Write-Host "=============================="
+        Write-Host "KALAU STATUS DI ATAS MUNCUL IP, CEK HP!"
+        Write-Host "=============================="
+        
+        # Biarkan tetap jalan 6 jam
+        Start-Sleep -Seconds 21600
         
