@@ -1,18 +1,21 @@
-name: RDP-CLOUDFLARE-FINAL-STABIL
+name: WINDOWS-VNC-SERVER
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Tanpa-Download
+    - name: Pasang-VNC-Server
       shell: pwsh
       run: |
-        Write-Host "Mengambil jalur VIP Cloudflare..."
-        # Mengaktifkan RDP di Windows
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Write-Host "Menginstal TightVNC Server..."
+        # Download & Install TightVNC
+        $url = "https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi"
+        bitsadmin /transfer VNCDownload /download /priority FOREGROUND $url "$PWD\vnc.msi"
+        Start-Process msiexec.exe -ArgumentList "/i vnc.msi /quiet /norestart SET_USEPASSWORD=1 VALUE_OF_PASSWORD=Sakti123! SET_USEVIEWONLYPASSWORD=1 VALUE_OF_VIEWONLYPASSWORD=Sakti123!" -Wait
         
-        # Langsung jalankan tanpa simpan file .exe
+        Write-Host "Menyiapkan Terowongan Cloudflare..."
         iwr -useb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
-        ./cloudflared.exe tunnel --url tcp://localhost:3389
+        
+        # Jalankan tunnel untuk port VNC (5900)
+        ./cloudflared.exe tunnel --url tcp://localhost:5900
         
