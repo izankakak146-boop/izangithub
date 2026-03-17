@@ -1,9 +1,9 @@
-name: RDP-Sakti-Final
+name: RDP-Sakti-Final-V10
 on:
   workflow_dispatch:
     inputs:
       token:
-        description: 'Tempel Token Ngrok Kamu'
+        description: 'Tempel Token Ngrok'
         required: true
 jobs:
   build:
@@ -12,21 +12,26 @@ jobs:
     - name: Gaspol
       shell: pwsh
       run: |
-        # Buat User
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
-        # Install Ngrok
         choco install ngrok -y
-        # Pasang Token
         $TOKEN = "${{ github.event.inputs.token }}".Trim()
         ngrok config add-authtoken $TOKEN
-        # Jalankan
         Start-Process ngrok -ArgumentList "tcp --region ap 3389"
-        Write-Host "Nunggu tunnel nyambung..."
-        Start-Sleep -Seconds 20
-        # Ambil IP
-        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels
-        Write-Host "--- ALAMAT RDP ADA DI BAWAH ---"
-        echo $api
-        while($true){ Start-Sleep 60 }
+        Write-Host "Sabar Bos, lagi mancing alamat..."
+        Start-Sleep -Seconds 30
+        
+        # Cara paksa ambil URL dan tampilin sebagai teks biasa
+        $info = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
+        $hasil = $info.tunnels[0].public_url
+        
+        Write-Host "===================================="
+        Write-Host "ALAMAT RDP KAMU ADALAH:"
+        Write-Host $hasil
+        Write-Host "===================================="
+        
+        while($true){ 
+          Write-Host "Masih idup..."
+          Start-Sleep 60 
+        }
         
