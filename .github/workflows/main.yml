@@ -1,43 +1,48 @@
-name: VNC-TAILSCALE-FIX-PASSWORD
+name: VNC-SUPER-SAKTI-IZAN
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-VNC-dan-Suntik-Password
+    - name: Konfigurasi-Sakti-Password-Izan
       shell: pwsh
       run: |
-        # 1. Download TightVNC
+        # 1. Download & Install TightVNC
         $url = "https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi"
-        bitsadmin /transfer VNCDownload /download /priority FOREGROUND $url "$PWD\vnc.msi"
-        
-        # 2. Install TightVNC diam-diam
+        bitsadmin /transfer VNCD /download /priority FOREGROUND $url "$PWD\vnc.msi"
         Start-Process msiexec.exe -ArgumentList "/i vnc.msi /quiet /norestart" -Wait
         
-        # 3. KODE SAKTI: Suntik Password ke Registry & System
-        # Kita set password 'Sakti123!' secara paksa agar tidak ditolak lagi
-        $pass = "Sakti123!"
-        & "C:\Program Files\TightVNC\tvnserver.exe" -install
-        & "C:\Program Files\TightVNC\tvnserver.exe" -controlpass=$pass -vncpass=$pass
+        # 2. JURUS SAKTI: Suntik Password 'izan123' & Matikan Security
+        # Kita setel langsung ke jantung Windows (Registry)
+        $regPath = "HKLM:\SOFTWARE\TightVNC\Server"
+        if (!(Test-Path $regPath)) { New-Item -Path $regPath -Force }
         
-        # 4. Pasang Tailscale
+        # Matikan enkripsi biar AVNC gak bingung
+        Set-ItemProperty -Path $regPath -Name "RequiredSecurity" -Value "None" -Type DWord
+        Set-ItemProperty -Path $regPath -Name "AcceptSetPassword" -Value 1 -Type DWord
+        
+        # Set Password lewat command line bawaan TightVNC
+        & "C:\Program Files\TightVNC\tvnserver.exe" -install
+        & "C:\Program Files\TightVNC\tvnserver.exe" -vncpass=izan123 -controlpass=izan123
+        
+        # 3. Pasang Tailscale
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
-        # 5. Login Tailscale (GANTI 'TS_AUTH_KEY' dengan Auth Key kamu!)
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kquwAQAuNA11CNTRL-FGx1PKCEJBPNMsX87uuSBPp5pCE5DZBc --accept-routes
+        # 4. Login Tailscale (PASTIKAN AUTH KEY KAMU BENAR)
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey TS_AUTH_KEY --accept-routes
         
-        # 6. Restart Service VNC biar passwordnya aktif
+        # 5. Restart Service buat aktifin password baru
         net stop "TightVNC Server"
         net start "TightVNC Server"
         
-        Write-Host "VNC AKTIF! Password: $pass"
-        Write-Host "Mesin akan online selama 30 Menit ke depan..."
-
-        # 7. KODE SAKTI: Menjaga mesin tetap Online (30 Menit)
-        $timeout = 30
-        for ($i = 1; $i -le $timeout; $i++) {
-          Write-Host "Menjaga koneksi... Menit ke-$i"
+        Write-Host "VNC SIAP! Password baru: izan123"
+        Write-Host "Gunakan IP Tailscale yang muncul di HP kamu."
+        
+        # 6. Tahan mesin selama 60 Menit (Biar puas!)
+        $timeout = 60
+        for ($i=1; $i -le $timeout; $i++) {
+          Write-Host "Mesin Melek... Menit ke-$i"
           Start-Sleep -Seconds 60
         }
         
