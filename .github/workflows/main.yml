@@ -1,41 +1,36 @@
-name: VNC-SUPER-SAKTI-IZAN-FIX
+name: VNC-PLONG-TANPA-PASSWORD
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Konfigurasi-Sakti-Password-Izan
+    - name: Pasang-VNC-Tanpa-Password
       shell: pwsh
       run: |
-        # 1. Download & Install TightVNC
+        # 1. Install TightVNC
         $url = "https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi"
         bitsadmin /transfer VNCD /download /priority FOREGROUND $url "$PWD\vnc.msi"
         Start-Process msiexec.exe -ArgumentList "/i vnc.msi /quiet /norestart" -Wait
         
-        # 2. JURUS SAKTI FIX: Pake angka 1 dan 0 biar Registry gak error
+        # 2. JURUS PLONG: Hapus Password & Matikan Security di Registry
         $regPath = "HKLM:\SOFTWARE\TightVNC\Server"
         if (!(Test-Path $regPath)) { New-Item -Path $regPath -Force }
         
-        # RequiredSecurity = 0 artinya "None" (Tanpa Enkripsi)
+        # Setel supaya gak minta password sama sekali (None)
         Set-ItemProperty -Path $regPath -Name "RequiredSecurity" -Value 0 -Type DWord
-        Set-ItemProperty -Path $regPath -Name "AcceptSetPassword" -Value 1 -Type DWord
-        
-        # Set Password 'izan123'
-        & "C:\Program Files\TightVNC\tvnserver.exe" -install
-        & "C:\Program Files\TightVNC\tvnserver.exe" -vncpass=izan123 -controlpass=izan123
+        Set-ItemProperty -Path $regPath -Name "ExtraPorts" -Value "" -Type String
         
         # 3. Pasang Tailscale
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
-        # 4. Login Tailscale (GANTI AUTH_KEY KAMU DI SINI)
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kYfbSQtUB821CNTRL-hBWhGPCgXKjGSzz19D6zKjfkwsx3Pu7N --accept-routes
+        # 4. Login Tailscale (GANTI AUTH_KEY KAMU)
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-k2Unipg8B721CNTRL-dYCoBKfKFCLgqAewGhbhCLPYsPqq1wbP --accept-routes
         
-        # 5. Restart Service
-        net stop "TightVNC Server"; net start "TightVNC Server"
+        # 5. Jalankan Server tanpa Password
+        & "C:\Program Files\TightVNC\tvnserver.exe" -install
+        & "C:\Program Files\TightVNC\tvnserver.exe" -run
         
-        Write-Host "VNC SIAP! Password: izan123"
-        
-        # 6. Online selama 30 menit
+        Write-Host "VNC SIAP TANPA PASSWORD!"
         $i = 0; while($i -lt 30) { Write-Host "Melek menit ke-$i"; Start-Sleep -Seconds 60; $i++ }
         
