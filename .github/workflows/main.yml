@@ -10,30 +10,29 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: 1. Download & Install Chrome Remote Desktop
+    - name: 1. Install Chrome Remote Desktop
       run: |
         $URL = "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi"
         Invoke-WebRequest $URL -OutFile "crd.msi"
         Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn" -Wait
 
-    - name: 2. Konfigurasi Windows Agar Stabil
+    - name: 2. Setting Power Agar Anti-Sleep
       run: |
-        # Matikan Screen Saver dan Power Saving agar tidak timeout
         powercfg /x -hibernate-timeout-ac 0
         powercfg /x -hibernate-timeout-dc 0
         powercfg /x -monitor-timeout-ac 0
         powercfg /x -monitor-timeout-dc 0
 
-    - name: 3. Eksekusi & Suntik Kode Otorisasi
+    - name: 3. Eksekusi Suntik Kode
+      shell: pwsh
       run: |
-        # Mengambil input dari tombol Run Workflow dan menambahkan PIN otomatis 123456
         ${{ github.event.inputs.auth_code }} -Pin 123456
 
-    - name: 4. Menjaga Server Tetap Hidup (6 Jam)
+    - name: 4. Menjaga Server Hidup 6 Jam
       run: |
         $i = 0
         while($i -lt 360) {
-          Write-Host "Mesin Aktif... Menit ke-$i (Jangan tutup tab Actions ini)"
+          Write-Host "Windows Aktif... Menit ke-$i"
           Start-Sleep -Seconds 60
           $i++
         }
