@@ -1,27 +1,30 @@
-name: RDP-ANYDESK-GAS
+name: RDP-CEPAT-GASPOL
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Nyalakan-AnyDesk
+    - name: Set-User
+      run: |
+        net user runneradmin Sakti123! /add
+        net localgroup administrators runneradmin /add
+    - name: Jalankan-Tunnel-Kilat
       shell: pwsh
       run: |
-        # 1. Download AnyDesk
-        Invoke-WebRequest -Uri "https://download.anydesk.com/AnyDesk.exe" -OutFile "AnyDesk.exe"
-        
-        # 2. Jalankan AnyDesk dan set password biar kamu bisa langsung masuk
-        # Passwordnya: Sakti123!
-        echo "Sakti123!" | .\AnyDesk.exe --set-password
-        
-        # 3. Ambil ID AnyDesk mesin ini
-        Start-Sleep -Seconds 5
-        .\AnyDesk.exe --get-id
+        # Download Cloudflare
+        curl.exe -fL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -o cloudflared.exe
         
         Write-Host "=============================="
-        Write-Host "TUNGGU ID ANYDESK MUNCUL DI ATAS..."
+        Write-Host "LAGI NYIAPIN LINK... TUNGGU 30 DETIK"
         Write-Host "=============================="
+        
+        # Jalankan tunnel mode TCP untuk RDP
+        Start-Process ./cloudflared.exe -ArgumentList "tunnel --url tcp://localhost:3389" -RedirectStandardOutput "link.txt"
+        
+        # Tunggu bentar terus tampilin linknya
+        Start-Sleep -Seconds 20
+        Get-Content link.txt | Select-String "trycloudflare.com"
         
         while($true){ Start-Sleep 60 }
         
