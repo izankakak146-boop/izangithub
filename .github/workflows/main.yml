@@ -1,24 +1,20 @@
-name: RDP-ZEROTIER-BUKAN-TUNNEL
+name: RDP-TELEBIT-PASTI-TEMBUS
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-ZeroTier-Sakti
+    - name: Gaspol-Telebit
       shell: pwsh
       run: |
-        Write-Host "Menginstal ZeroTier..."
-        $url = "https://download.zerotier.com/dist/ZeroTier%20One.msi"
-        bitsadmin /transfer ZTDownload /download /priority FOREGROUND $url "$PWD\zt.msi"
-        Start-Process msiexec.exe -ArgumentList "/i zt.msi /quiet /norestart" -Wait
-        
-        Write-Host "Menghubungkan ke Network..."
-        # GANTI ID_NETWORK_KAMU dengan 16 digit ID dari web ZeroTier
-        $networkId = "ID_NETWORK_KAMU"
-        & "C:\Program Files (x86)\ZeroTier\One\zerotier-one_x64.exe" -q join $networkId
+        Write-Host "Mengambil kunci Telebit..."
+        # Download Telebit binary langsung
+        curl.exe -L https://get.telebit.io/windows/amd64/telebit.exe -o telebit.exe
         
         Write-Host "=============================="
-        Write-Host "CEK PANEL ZEROTIER DAN CENTANG 'AUTH'!"
+        Write-Host "MENYALAKAN TEROWONGAN RAHASIA..."
         Write-Host "=============================="
-        Start-Sleep -Seconds 21600
+        
+        # Jalankan tunnel untuk RDP port 3389
+        ./telebit.exe http 3389
         
