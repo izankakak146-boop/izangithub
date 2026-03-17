@@ -1,23 +1,33 @@
-name: RDP-SERVEO-FINAL
+name: RDP-NGROK-BRUTAL
 on:
   workflow_dispatch:
+    inputs:
+      auth:
+        description: 'Masukkan Ngrok Authtoken'
+        required: true
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Serveo
+    - name: Gaspol-Ngrok
       shell: pwsh
       run: |
-        Write-Host "Lagi buka jalur murni..."
-        # Langsung tembak tunnel tanpa install apa-apa
-        Start-Process ssh -ArgumentList "-o StrictHostKeyChecking=no -R 80:localhost:3389 serveo.net" -RedirectStandardOutput "link.txt"
+        # 1. Download Ngrok murni
+        curl.exe -fL https://bin.equinox.io/c/bNy9KvX7Ba8/ngrok-v3-stable-windows-amd64.zip -o ngrok.zip
+        Expand-Archive ngrok.zip
         
-        Write-Host "=============================="
-        Write-Host "TUNGGU 20 DETIK..."
-        Write-Host "=============================="
+        # 2. Set Authtoken dari Input
+        $token = "${{ github.event.inputs.auth }}"
+        ./ngrok/ngrok.exe config add-authtoken $token
+        
+        Write-Host "Membuka jalur TCP murni..."
+        
+        # 3. Jalankan tunnel TCP (bukan HTTP)
+        Start-Process ./ngrok/ngrok.exe -ArgumentList "tcp 3389" -RedirectStandardOutput "log.txt"
         
         Start-Sleep -Seconds 20
-        Get-Content link.txt
+        # Ambil alamat tcp://0.tcp.ngrok.io:XXXXX
+        Get-Content log.txt | Select-String "tcp://"
         
         while($true){ Start-Sleep 60 }
         
