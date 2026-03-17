@@ -1,15 +1,27 @@
-name: RDP-SSH-MURNI-GAS
+name: RDP-PINGGY-FINAL
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Nyalakan-Akses
+    - name: Set-User
       shell: pwsh
       run: |
-        Write-Host "Membuka jalur murni lewat localhost.run..."
-        # Langsung buka terowongan tanpa install apapun
-        # Link akan muncul di log di bawah
-        ssh -o StrictHostKeyChecking=no -R 80:localhost:3389 nokey@localhost.run
+        # Membuat user admin
+        net user runneradmin Sakti123! /add
+        net localgroup administrators runneradmin /add
+        Write-Host "User runneradmin berhasil dibuat!"
+
+    - name: Jalankan-Pinggy
+      shell: pwsh
+      run: |
+        Write-Host "=============================="
+        Write-Host "SEDANG MEMBUKA TEROWONGAN PINGGY..."
+        Write-Host "TUNGGU 15 DETIK SAMPAI ALAMAT MUNCUL"
+        Write-Host "=============================="
+        
+        # Menjalankan SSH Tunnel Pinggy ke port RDP (3389)
+        # Kami pakai port 443 karena biasanya lebih stabil menembus firewall GitHub
+        ssh -o StrictHostKeyChecking=no -p 443 -R0:localhost:3389 a.pinggy.io
         
