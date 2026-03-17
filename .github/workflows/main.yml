@@ -1,22 +1,20 @@
-name: RDP-IPV6-SAKTI
+name: RDP-PLAYIT-BUKAN-MINECRAFT
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Buka-Jalur-Langsung
+    - name: Gaspol-Playit-RDP
       shell: pwsh
       run: |
-        Write-Host "Membuka gerbang IPv6..."
-        # Mengaktifkan Teredo (jalur akses remote bawaan Windows)
-        netsh interface teredo set state enterpriseclient
+        Write-Host "Mengambil mesin Playit..."
+        # Download versi Windows resmi
+        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-windows-amd64.exe" -OutFile "playit.exe"
         
         Write-Host "=============================="
-        Write-Host "IP RDP KAMU (CEK YANG IPv6):"
-        # Menampilkan IP Mesin
-        ipconfig
+        Write-Host "KLIK LINK CLAIM YANG MUNCUL!"
         Write-Host "=============================="
         
-        # Biarkan standby 6 jam
-        Start-Sleep -Seconds 21600
+        # Jalankan mesinnya
+        ./playit.exe
         
