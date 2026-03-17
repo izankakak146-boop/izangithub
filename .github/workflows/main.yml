@@ -40,5 +40,5 @@ jobs:
         for ($i = 1; $i -le $timeout; $i++) {
           Write-Host "Menjaga koneksi... Menit ke-$i"
           Start-Sleep -Seconds 60
-        }
+        } 
         
