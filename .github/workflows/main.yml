@@ -1,4 +1,4 @@
-name: RDP-Sakti-Final-V10
+name: RDP-Sakti-Pasti-Bisa
 on:
   workflow_dispatch:
     inputs:
@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol
+    - name: Gas
       shell: pwsh
       run: |
         net user runneradmin Sakti123! /add
@@ -18,20 +18,10 @@ jobs:
         $TOKEN = "${{ github.event.inputs.token }}".Trim()
         ngrok config add-authtoken $TOKEN
         Start-Process ngrok -ArgumentList "tcp --region ap 3389"
-        Write-Host "Sabar Bos, lagi mancing alamat..."
-        Start-Sleep -Seconds 30
-        
-        # Cara paksa ambil URL dan tampilin sebagai teks biasa
-        $info = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
-        $hasil = $info.tunnels[0].public_url
-        
-        Write-Host "===================================="
-        Write-Host "ALAMAT RDP KAMU ADALAH:"
-        Write-Host $hasil
-        Write-Host "===================================="
-        
-        while($true){ 
-          Write-Host "Masih idup..."
-          Start-Sleep 60 
-        }
+        Write-Host "Sabar Bos, nunggu 60 detik biar koneksi stabil..."
+        Start-Sleep -Seconds 60
+        # Coba tampilin alamat di log lagi
+        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
+        Write-Host "ALAMAT RDP: $($api.tunnels[0].public_url)"
+        while($true){ Start-Sleep 60 }
         
