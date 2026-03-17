@@ -1,47 +1,40 @@
-name: ANYDESK-ANTI-CHAT-IZAN
+name: ANYDESK-TEMBUS-LANGSUNG-IZAN
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Eksekusi-Jurus-Tembus-Langsung
+    - name: Eksekusi-Bypass-Chat
       shell: pwsh
       run: |
-        # 1. Download AnyDesk
+        # 1. Download & Instal AnyDesk
         iwr https://download.anydesk.com/AnyDesk.exe -OutFile AnyDesk.exe
-        
-        # 2. Instal AnyDesk secara resmi (Wajib buat bypass chat)
         Start-Process ./AnyDesk.exe -ArgumentList "--install `"C:\Program Files (x86)\AnyDesk`" --start-with-win --silent" -Wait
         
-        # 3. MASUK KE FOLDER INSTALASI (Penting!)
+        # 2. MASUK KE JANTUNG ANYDESK
         cd "C:\Program Files (x86)\AnyDesk"
         
-        # 4. SET PASSWORD & AKTIFKAN AKSES TANPA IZIN
-        # Perintah ini yang bikin kamu gak perlu klik 'Accept' lagi
+        # 3. MATIKAN FITUR CHAT/IZAN (Wajib!)
+        # Perintah ini maksa AnyDesk cuma nerima akses lewat password saja
+        ./AnyDesk.exe --config --unattended-access-only
+        
+        # 4. SET PASSWORD 'izan123'
         echo "izan123" | ./AnyDesk.exe --set-password
         
-        # 5. Ambil ID AnyDesk & Jeda biar server siap
+        # 5. Ambil ID & Pastikan Tailscale Jalan
         Start-Sleep -Seconds 15
         $anyid = ./AnyDesk.exe --get-id
-        
-        Write-Host "===================================="
+        Write-Host "==============================="
         Write-Host "ID ANYDESK: $anyid"
-        Write-Host "PASSWORD: izan123"
-        Write-Host "===================================="
+        Write-Host "PASS: izan123"
+        Write-Host "==============================="
         
-        # 6. Pasang Tailscale (Jalur Hijau Kamu)
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
-        # MASUKKAN AUTH KEY TAILSCALE KAMU DI BAWAH:
+        # MASUKKAN KEY TAILSCALE KAMU DI SINI
         & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kBdSTCmdbm11CNTRL-kY5RzvhucXLsSRcNCgdAXLXeLNvPQ46P8 --accept-routes
         
-        Write-Host "SEMUA SIAP! Langsung hajar pake Password!"
-        
-        # 7. Penahan Melek 60 Menit
-        $timeout = 60
-        for ($i = 1; $i -le $timeout; $i++) {
-          Write-Host "Mesin Melek Menit ke-$i"
-          Start-Sleep -Seconds 60
-        }
+        # Tahan melek 60 menit
+        $i = 0; while($i -lt 60) { Start-Sleep -Seconds 60; $i++ }
         
