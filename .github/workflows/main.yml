@@ -1,9 +1,9 @@
-name: RDP-Sakti-Input-Token
+name: RDP-Sakti-Pasti-Jadi
 on:
   workflow_dispatch:
     inputs:
       ngrok_token:
-        description: 'Tempel Token Ngrok Kamu di Sini'
+        description: 'Tempel Token Ngrok Kamu'
         required: true
 
 jobs:
@@ -13,36 +13,36 @@ jobs:
     - name: Gaspol
       shell: pwsh
       run: |
-        # 1. Buat User RDP
+        # 1. User RDP
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
         
-        # 2. Install Ngrok
+        # 2. Install Ngrok (Cepat)
         choco install ngrok -y
         
-        # 3. Pakai Token dari Input
+        # 3. Bersihkan Token dari Spasi Nakal
         $TOKEN = "${{ github.event.inputs.ngrok_token }}".Trim()
-        ngrok config add-authtoken $TOKEN
         
-        # 4. Jalankan Tunnel
+        # 4. Jalankan Tanpa Tunggu Konfirmasi
+        & ngrok authtoken $TOKEN
         Start-Process ngrok -ArgumentList "tcp 3389"
-        Write-Host "Sabar Bos, lagi nyambungin kabel..."
+        
+        Write-Host "Lagi mancing alamat IP... Tunggu bentar..."
         Start-Sleep -Seconds 20
         
-        # 5. Ambil Alamat RDP
-        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels
-        if ($api -like "*public_url*") {
-          $json = $api | ConvertFrom-Json
-          $url = $json.tunnels[0].public_url
-          Write-Host "-------------------------------------"
+        # 5. Ambil IP dengan cara yang lebih kuat
+        $api = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels"
+        if ($api.tunnels.public_url) {
+          $url = $api.tunnels[0].public_url
+          Write-Host "`n===================================="
+          Write-Host "BERHASIL JALAN, BOS!"
           Write-Host "ALAMAT RDP: $url"
           Write-Host "USER: runneradmin | PASS: Sakti123!"
-          Write-Host "-------------------------------------"
+          Write-Host "===================================="
         } else {
-          Write-Host "GAGAL! Token salah atau Ngrok ngambek."
+          Write-Host "Ngrok belum dapet IP. Coba cek dashbord ngrok kamu, Bos."
           exit 1
         }
         
-        # 6. Jaga tetap hidup
         while($true){ Start-Sleep -Seconds 60 }
         
