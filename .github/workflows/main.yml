@@ -1,9 +1,9 @@
-name: Windows-Sakti-CRD
+name: Windows-Sakti-Final
 on:
   workflow_dispatch:
     inputs:
       auth_code:
-        description: 'Tempel Kode PowerShell dari Google (Headless) di sini'
+        description: 'Tempel HANYA Kode Otorisasinya (yang ada di dalam --code="...")'
         required: true
 
 jobs:
@@ -16,23 +16,16 @@ jobs:
         Invoke-WebRequest $URL -OutFile "crd.msi"
         Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn" -Wait
 
-    - name: 2. Setting Power Agar Anti-Sleep
-      run: |
-        powercfg /x -hibernate-timeout-ac 0
-        powercfg /x -hibernate-timeout-dc 0
-        powercfg /x -monitor-timeout-ac 0
-        powercfg /x -monitor-timeout-dc 0
-
-    - name: 3. Eksekusi Suntik Kode
+    - name: 2. Eksekusi Langsung
       shell: pwsh
       run: |
-        ${{ github.event.inputs.auth_code }} -Pin 123456
+        & "${Env:ProgramFiles(x86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="${{ github.event.inputs.auth_code }}" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME -Pin 123456
 
-    - name: 4. Menjaga Server Hidup 6 Jam
+    - name: 3. Jaga Server
       run: |
         $i = 0
         while($i -lt 360) {
-          Write-Host "Windows Aktif... Menit ke-$i"
+          Write-Host "Windows Nyala... Menit ke-$i"
           Start-Sleep -Seconds 60
           $i++
         }
