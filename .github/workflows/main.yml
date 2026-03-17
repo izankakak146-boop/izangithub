@@ -1,32 +1,27 @@
-name: RDP-LOCALTONET-FIX-V3
+name: RDP-LOCALTONET-FINAL-GAS
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Setup-User
-      run: |
-        net user runneradmin Sakti123! /add
-        net localgroup administrators runneradmin /add
     - name: Setup-Localtonet
       shell: pwsh
       run: |
-        # Download versi terbaru langsung dari server mereka
-        Invoke-WebRequest -Uri "https://localtonet.com/download/localtonet-windows-x64.zip" -OutFile "localtonet.zip"
-        Expand-Archive -Path "localtonet.zip" -DestinationPath "C:\localtonet"
-        cd C:\localtonet
+        # Download Localtonet
+        Invoke-WebRequest -Uri "https://localtonet.com/download/localtonet-windows-x64.zip" -OutFile "lt.zip"
+        Expand-Archive -Path "lt.zip" -DestinationPath "C:\lt"
+        cd C:\lt
         
-        # MASUKKAN TOKEN LOCALTONET KAMU DI SINI
+        # JALANKAN TOKEN LOCALTONET LANGSUNG
+        # GANTI_DENGAN_TOKEN_LOCALTONET_ASLI_KAMU
         ./localtonet.exe authtokentSUr5yD0dTXHLKhfuMFP24b7cqCBsai8N
         
-        # Jalankan tunnel TCP untuk RDP
+        # Aktifkan Tunnel TCP Port 3389
         Start-Process ./localtonet.exe -ArgumentList "tcp","--port","3389"
         
         Write-Host "=============================="
-        Write-Host "MESIN LOCALTONET SUDAH GAS!"
-        Write-Host "CEK WEB LOCALTONET SEKARANG!"
+        Write-Host "MESIN AKTIF! CEK WEB LOCALTONET"
         Write-Host "=============================="
-        
         while($true){ Start-Sleep 60 }
         
