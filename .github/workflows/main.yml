@@ -1,26 +1,22 @@
-name: RDP-TAILSCALE-FINAL-GAS
+name: RDP-TMATE-BEBAS-AKUN
 on:
   workflow_dispatch:
-    inputs:
-      tskey:
-        description: 'Masukkan Auth Key Tailscale'
-        required: true
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-Tailscale
+    - name: Nyalakan-Akses
       shell: pwsh
       run: |
-        curl.exe -fL https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
-        Start-Process .\tailscale-setup.exe -ArgumentList "/quiet" -Wait
+        # Ambil program tmate
+        curl.exe -fL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz -o tmate.tar.xz
+        # Eh ini Windows, kita pake versi chocolatey aja biar gak ribet download manual
+        choco install tmate -y
         
-        Write-Host "Menghubungkan ke jaringan Tailscale..."
-        $key = "${{ github.event.inputs.tskey }}"
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=$key --accept-routes
+        Write-Host "=============================="
+        Write-Host "TUNGGU BENTAR, LAGI NYARI JALUR..."
+        Write-Host "=============================="
         
-        Write-Host "===================================="
-        Write-Host "BERHASIL! CEK APLIKASI TAILSCALE HP"
-        Write-Host "===================================="
-        while($true){ Start-Sleep 60 }
+        # Jalankan tmate
+        tmate -F
         
