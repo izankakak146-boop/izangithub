@@ -1,11 +1,10 @@
-name: RDP-Sakti-Final-V5
+name: RDP-Sakti-Final
 on:
   workflow_dispatch:
     inputs:
-      ngrok_token:
-        description: 'Tempel Token Ngrok (Hanya kodenya saja)'
+      token:
+        description: 'Tempel Token Ngrok Kamu'
         required: true
-
 jobs:
   build:
     runs-on: windows-latest
@@ -13,43 +12,21 @@ jobs:
     - name: Gaspol
       shell: pwsh
       run: |
-        # 1. Setup User
+        # Buat User
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
-        
-        # 2. Install Ngrok via Choco
+        # Install Ngrok
         choco install ngrok -y
-        
-        # 3. Validasi & Pasang Token
-        $TOKEN = "${{ github.event.inputs.ngrok_token }}".Trim()
-        & ngrok authtoken $TOKEN
-        
-        # 4. Jalankan Ngrok & Tunggu 30 Detik
-        Write-Host "Menjalankan Ngrok... Sabar Bos..."
-        Start-Process ngrok -ArgumentList "tcp 3389"
-        Start-Sleep -Seconds 30
-        
-        # 5. Ambil IP dengan sistem pengulangan (Retrying)
-        $attempts = 0
-        while ($attempts -lt 5) {
-            try {
-                $api = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels"
-                $url = $api.tunnels[0].public_url
-                if ($url) {
-                    Write-Host "`n================================"
-                    Write-Host "BERHASIL NYALA, BOS!"
-                    Write-Host "ALAMAT RDP: $url"
-                    Write-Host "USER: runneradmin | PASS: Sakti123!"
-                    Write-Host "================================"
-                    break
-                }
-            } catch {
-                Write-Host "Ngrok belum siap, mencoba lagi... ($attempts)"
-                Start-Sleep -Seconds 10
-                $attempts++
-            }
-        }
-        
-        if (-not $url) { Write-Host "Gagal dapet IP. Cek Token!"; exit 1 }
-        while($true){ Start-Sleep -Seconds 60 }
+        # Pasang Token
+        $TOKEN = "${{ github.event.inputs.token }}".Trim()
+        ngrok config add-authtoken $TOKEN
+        # Jalankan
+        Start-Process ngrok -ArgumentList "tcp --region ap 3389"
+        Write-Host "Nunggu tunnel nyambung..."
+        Start-Sleep -Seconds 20
+        # Ambil IP
+        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels
+        Write-Host "--- ALAMAT RDP ADA DI BAWAH ---"
+        echo $api
+        while($true){ Start-Sleep 60 }
         
