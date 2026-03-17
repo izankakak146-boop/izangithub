@@ -1,26 +1,26 @@
-name: RDP-TAILSCALE-ANTI-RIBET
+name: RDP-TAILSCALE-FINAL-BOS
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Setup-User
-      run: |
-        net user runneradmin Sakti123! /add
-        net localgroup administrators runneradmin /add
     - name: Pasang-Tailscale
       shell: pwsh
       run: |
-        # Instal Tailscale tanpa ribet
+        # Download & Install Tailscale secara diam-diam
         curl.exe -fL https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
         Start-Process .\tailscale-setup.exe -ArgumentList "/quiet" -Wait
         
-        # Jalankan dan minta Link Login
+        Write-Host "Menghubungkan ke jaringan Tailscale..."
+        
+        # JANGAN LUPA GANTI KUNCI DI BAWAH INI
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth tskey-auth-kkuDvwF8hi11CNTRL-71RcKBVeKJ98PfFVGyJsH97Vd7B9rgiXL
+        
         Write-Host "===================================="
-        Write-Host "KLIK LINK DI BAWAH UNTUK LOGIN!"
+        Write-Host "MESIN SUDAH NYAMBUNG KE HP KAMU!"
+        Write-Host "CEK APLIKASI TAILSCALE DI HP SEKARANG"
         Write-Host "===================================="
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kkuDvwF8hi11CNTRL-71RcKBVeKJ98PfFVGyJsH97Vd7B9rgiXL
         
         while($true){ Start-Sleep 60 }
         
