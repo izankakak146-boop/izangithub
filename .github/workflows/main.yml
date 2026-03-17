@@ -1,10 +1,6 @@
-name: RDP-ANTI-ERROR
+name: RDP-PASTI-TEMBUS
 on:
   workflow_dispatch:
-    inputs:
-      token:
-        description: 'Tempel Token Ngrok'
-        required: true
 jobs:
   build:
     runs-on: windows-latest
@@ -15,10 +11,18 @@ jobs:
         net user runneradmin Sakti123! /add
         net localgroup administrators runneradmin /add
         choco install ngrok -y
-        ngrok config add-authtoken ${{ github.event.inputs.token }}
-        # Kita nyalain ngrok, trus biarin aja sampe kiamat
+        # MASUKKAN TOKEN KAMU LANGSUNG DI BAWAH INI
+        ngrok config add-authtoken3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
+        
         Start-Process ngrok -ArgumentList "tcp --region ap 3389"
-        Write-Host "MESIN SUDAH NYALA BOS!"
-        Write-Host "Sekarang cek alamatnya di web Ngrok manual."
+        Write-Host "MESIN SUDAH JALAN!"
+        
+        # Kita paksa ambil alamat dari dalam mesin biar gak usah buka web
+        Start-Sleep -Seconds 30
+        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
+        Write-Host "=============================="
+        Write-Host "ALAMAT RDP: $($api.tunnels[0].public_url)"
+        Write-Host "=============================="
+        
         while($true){ Start-Sleep 60 }
         
