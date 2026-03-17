@@ -1,27 +1,20 @@
-name: RDP-LOCALTONET-FINAL-GAS
+name: RDP-CLOUDFLARE-PASTI-JALAN
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Setup-Localtonet
+    - name: Gaspol
       shell: pwsh
       run: |
-        # Download Localtonet
-        Invoke-WebRequest -Uri "https://localtonet.com/download/localtonet-windows-x64.zip" -OutFile "lt.zip"
-        Expand-Archive -Path "lt.zip" -DestinationPath "C:\lt"
-        cd C:\lt
+        # Download Cloudflared
+        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi" -OutFile "cf.msi"
+        Start-Process msiexec.exe -ArgumentList "/i cf.msi /quiet" -Wait
         
-        # JALANKAN TOKEN LOCALTONET LANGSUNG
-        # GANTI_DENGAN_TOKEN_LOCALTONET_ASLI_KAMU
-        ./localtonet.exe authtokentSUr5yD0dTXHLKhfuMFP24b7cqCBsai8N
-        
-        # Aktifkan Tunnel TCP Port 3389
-        Start-Process ./localtonet.exe -ArgumentList "tcp","--port","3389"
-        
+        # Jalankan Tunnel RDP
         Write-Host "=============================="
-        Write-Host "MESIN AKTIF! CEK WEB LOCALTONET"
+        Write-Host "TUNGGU ALAMATNYA MUNCUL DI BAWAH..."
         Write-Host "=============================="
-        while($true){ Start-Sleep 60 }
+        & "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url tcp://localhost:3389
         
