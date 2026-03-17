@@ -1,23 +1,21 @@
-name: VNC-NGROK-SINGAPURA
+name: VNC-TAILSCALE-PASTI-JALAN
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-VNC-Server
+    - name: Pasang-VNC-dan-Tailscale
       shell: pwsh
       run: |
-        Write-Host "Menginstal TightVNC..."
-        $url = "https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi"
-        bitsadmin /transfer VNCD /download /priority FOREGROUND $url "$PWD\vnc.msi"
+        # 1. Pasang TightVNC dulu
+        $vncUrl = "https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi"
+        bitsadmin /transfer VNCD /download /priority FOREGROUND $vncUrl "$PWD\vnc.msi"
         Start-Process msiexec.exe -ArgumentList "/i vnc.msi /quiet /norestart SET_USEPASSWORD=1 VALUE_OF_PASSWORD=Sakti123!" -Wait
         
-        Write-Host "Mengambil Ngrok..."
-        Invoke-WebRequest -Uri "https://bin.equinox.io/c/b342Pue36pu/ngrok-stable-windows-amd64.zip" -OutFile "ngrok.zip"
-        Expand-Archive ngrok.zip
+        # 2. Pasang Tailscale (Link Resmi)
+        iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile tailscale-setup.exe
+        Start-Process ./tailscale-setup.exe -ArgumentList "/quiet /norestart" -Wait
         
-        Write-Host "Menghubungkan ke Singapura..."
-        # GANTI 'TOKEN_KAMU' dengan token asli dari dashboard ngrok.com
-        ./ngrok.exe authtoken 3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
-        ./ngrok.exe tcp --region ap 5900
+        # 3. Login Tailscale (GANTI 'TS_AUTH_KEY' pakai Auth Key kamu)
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-k9qDGTtdbF11CNTRL-uPLzF1j9GK48tLHv6FZiK4pBdvV3gZ79
         
