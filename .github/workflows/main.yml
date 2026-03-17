@@ -1,18 +1,21 @@
-name: RDP-SERVEO-FINAL-BOSS
+name: RDP-PLAYIT-PASTI-TEMBUS
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Serveo
+    - name: Gaspol-Playit
       shell: pwsh
       run: |
+        Write-Host "Memasang kabel data Playit..."
+        # Download Playit
+        Invoke-WebRequest -Uri https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-amd64.exe -OutFile playit.exe
+        
         Write-Host "=============================="
-        Write-Host "MEMBUKA JALUR SERVEO (ANTI MUTER)"
+        Write-Host "KLIK LINK DI BAWAH BUAT AKTIFIN"
         Write-Host "=============================="
         
-        # Kita tambahkan -tt biar dia maksa buka pseudo-terminal 
-        # Dan langsung arahin port 3389 ke dunia luar
-        ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -R 80:localhost:3389 serveo.net
+        # Jalankan Playit
+        ./playit.exe
         
