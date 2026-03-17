@@ -1,40 +1,29 @@
-name: ANYDESK-TEMBUS-LANGSUNG-IZAN
+name: RDP-TAILSCALE-IZAN-PASTI-CONNECT
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Eksekusi-Bypass-Chat
+    - name: Konfigurasi-RDP-Jalur-Kilat
       shell: pwsh
       run: |
-        # 1. Download & Instal AnyDesk
-        iwr https://download.anydesk.com/AnyDesk.exe -OutFile AnyDesk.exe
-        Start-Process ./AnyDesk.exe -ArgumentList "--install `"C:\Program Files (x86)\AnyDesk`" --start-with-win --silent" -Wait
+        # 1. Aktifkan RDP di sistem Windows
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
         
-        # 2. MASUK KE JANTUNG ANYDESK
-        cd "C:\Program Files (x86)\AnyDesk"
+        # 2. Set Password buat user 'runneradmin' jadi 'izan123'
+        net user runneradmin izan123
         
-        # 3. MATIKAN FITUR CHAT/IZAN (Wajib!)
-        # Perintah ini maksa AnyDesk cuma nerima akses lewat password saja
-        ./AnyDesk.exe --config --unattended-access-only
-        
-        # 4. SET PASSWORD 'izan123'
-        echo "izan123" | ./AnyDesk.exe --set-password
-        
-        # 5. Ambil ID & Pastikan Tailscale Jalan
-        Start-Sleep -Seconds 15
-        $anyid = ./AnyDesk.exe --get-id
-        Write-Host "==============================="
-        Write-Host "ID ANYDESK: $anyid"
-        Write-Host "PASS: izan123"
-        Write-Host "==============================="
-        
+        # 3. Pasang Tailscale (Jalur Privat Kamu)
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
-        # MASUKKAN KEY TAILSCALE KAMU DI SINI
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-k5DcHC8arF11CNTRL-TDT4oPVaBejcbyMJYxJjdjHZfavDNxfj8 --accept-routes
+        # LOGIN TAILSCALE (MASUKKAN KEY KAMU DI SINI)
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kX53Zwu4nZ11CNTRL-hJTzyTLPFGX8KzGxeo3oFXzcvFFj876k --accept-routes
         
-        # Tahan melek 60 menit
+        Write-Host "RDP SIAP! Login pake IP Tailscale & Pass: izan123"
+        
+        # 4. Penahan Melek biar gak mati
         $i = 0; while($i -lt 60) { Start-Sleep -Seconds 60; $i++ }
         
