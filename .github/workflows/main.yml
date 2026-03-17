@@ -1,27 +1,21 @@
-name: RDP-PLAYIT-ANTI-NOVEL
+name: RDP-SERVEO-FINAL-BOSS
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Download-Tanpa-Drama
+    - name: Gaspol-Serveo
       shell: pwsh
       run: |
-        Write-Host "Menyelundupkan Playit lewat jalur sistem..."
-        # Kita pakai bitsadmin, cara download paling 'diam-diam' di Windows
-        bitsadmin /transfer myDownloadJob /download /priority FOREGROUND "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-windows-amd64.exe" "$PWD\playit.exe"
-        
-        # Cek ukuran file biar nggak ketipu lagi
-        $size = (Get-Item playit.exe).Length
-        if ($size -lt 1000000) { 
-            Write-Host "YAHHH! Masih dapet novel. GitHub beneran lagi galak."
-            exit 1 
-        }
-
         Write-Host "=============================="
-        Write-Host "AKHIRNYA BERHASIL DOWNLOAD!"
-        Write-Host "TUNGGU LINK CLAIM-NYA..."
+        Write-Host "MEMBUKA JALUR SERVEO (ANTI MUTER)"
         Write-Host "=============================="
         
-        ./playit.exe
+        # Mengaktifkan RDP di sistem
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        
+        Write-Host "Menghubungkan ke terowongan..."
+        # Ini perintah saktinya, langsung tembus tanpa instal apa-apa
+        ssh -o StrictHostKeyChecking=no -R 80:localhost:3389 serveo.net
         
