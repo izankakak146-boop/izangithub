@@ -1,31 +1,43 @@
-name: VNC-TAILSCALE-PASTI-JALAN
+name: VNC-TAILSCALE-FIX-PASSWORD
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-VNC-dan-Tailscale
+    - name: Pasang-VNC-dan-Suntik-Password
       shell: pwsh
       run: |
-        # 1. Pasang TightVNC dulu
-        $vncUrl = "https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi"
-        bitsadmin /transfer VNCD /download /priority FOREGROUND $vncUrl "$PWD\vnc.msi"
-        Start-Process msiexec.exe -ArgumentList "/i vnc.msi /quiet /norestart SET_USEPASSWORD=1 VALUE_OF_PASSWORD=Sakti123!" -Wait
+        # 1. Download TightVNC
+        $url = "https://www.tightvnc.com/download/2.8.63/tightvnc-2.8.63-gpl-setup-64bit.msi"
+        bitsadmin /transfer VNCDownload /download /priority FOREGROUND $url "$PWD\vnc.msi"
         
-        # 2. Pasang Tailscale (Link Resmi)
-        iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile tailscale-setup.exe
-        Start-Process ./tailscale-setup.exe -ArgumentList "/quiet /norestart" -Wait
+        # 2. Install TightVNC diam-diam
+        Start-Process msiexec.exe -ArgumentList "/i vnc.msi /quiet /norestart" -Wait
         
-                # 3. Login Tailscale
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kx9FyTyMXG11CNTRL-zuLvLRmKyhFRZDCUHnqWhF2qFWxA9PNCM --accept-routes
+        # 3. KODE SAKTI: Suntik Password ke Registry & System
+        # Kita set password 'Sakti123!' secara paksa agar tidak ditolak lagi
+        $pass = "Sakti123!"
+        & "C:\Program Files\TightVNC\tvnserver.exe" -install
+        & "C:\Program Files\TightVNC\tvnserver.exe" -controlpass=$pass -vncpass=$pass
         
-        Write-Host "Tailscale sedang dipaksa online... Jangan di-stop!"
+        # 4. Pasang Tailscale
+        iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
+        Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
-        # JURUS BIAR GAK ABU-ABU: Nahan mesin biar tetep hidup selama 6 jam
-        $i = 0
-        while($i -lt 360) {
-          Write-Host "Menjaga koneksi tetap aktif... Menit ke-$i"
+        # 5. Login Tailscale (GANTI 'TS_AUTH_KEY' dengan Auth Key kamu!)
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kquwAQAuNA11CNTRL-FGx1PKCEJBPNMsX87uuSBPp5pCE5DZBc --accept-routes
+        
+        # 6. Restart Service VNC biar passwordnya aktif
+        net stop "TightVNC Server"
+        net start "TightVNC Server"
+        
+        Write-Host "VNC AKTIF! Password: $pass"
+        Write-Host "Mesin akan online selama 30 Menit ke depan..."
+
+        # 7. KODE SAKTI: Menjaga mesin tetap Online (30 Menit)
+        $timeout = 30
+        for ($i = 1; $i -le $timeout; $i++) {
+          Write-Host "Menjaga koneksi... Menit ke-$i"
           Start-Sleep -Seconds 60
-          $i++
         }
         
