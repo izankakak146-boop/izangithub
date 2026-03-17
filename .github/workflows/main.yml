@@ -1,17 +1,18 @@
-name: RDP-PINGGY-MURNI
+name: RDP-SERVEO-FINAL-BOSS
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Jalankan-Pinggy
+    - name: Gaspol-Serveo
       shell: pwsh
       run: |
         Write-Host "=============================="
-        Write-Host "MEMBUKA JALUR TANPA BIKIN USER"
+        Write-Host "MEMBUKA JALUR SERVEO (ANTI MUTER)"
         Write-Host "=============================="
         
-        # Langsung tembak port RDP (3389)
-        ssh -o StrictHostKeyChecking=no -p 443 -R0:localhost:3389 a.pinggy.io
+        # Kita tambahkan -tt biar dia maksa buka pseudo-terminal 
+        # Dan langsung arahin port 3389 ke dunia luar
+        ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -R 80:localhost:3389 serveo.net
         
