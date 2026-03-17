@@ -1,54 +1,47 @@
-name: ANYDESK-TAILSCALE-SAKTI-IZAN
+name: ANYDESK-ANTI-CHAT-IZAN
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Eksekusi-Jurus-Sakti
+    - name: Eksekusi-Jurus-Tembus-Langsung
       shell: pwsh
       run: |
         # 1. Download AnyDesk
-        Write-Host "Sedang mendownload AnyDesk..."
         iwr https://download.anydesk.com/AnyDesk.exe -OutFile AnyDesk.exe
         
-        # 2. Instal AnyDesk ke Sistem (Biar Gak Error Service)
-        Write-Host "Menginstal AnyDesk secara resmi..."
+        # 2. Instal AnyDesk secara resmi (Wajib buat bypass chat)
         Start-Process ./AnyDesk.exe -ArgumentList "--install `"C:\Program Files (x86)\AnyDesk`" --start-with-win --silent" -Wait
         
-        # 3. Masuk ke Folder Instalasi & Set Password 'izan123'
+        # 3. MASUK KE FOLDER INSTALASI (Penting!)
         cd "C:\Program Files (x86)\AnyDesk"
+        
+        # 4. SET PASSWORD & AKTIFKAN AKSES TANPA IZIN
+        # Perintah ini yang bikin kamu gak perlu klik 'Accept' lagi
         echo "izan123" | ./AnyDesk.exe --set-password
         
-        # 4. Ambil ID AnyDesk (Jeda 20 detik biar server Google/GitHub nyambung)
-        Write-Host "Menunggu AnyDesk siap di server..."
-        Start-Sleep -Seconds 20
+        # 5. Ambil ID AnyDesk & Jeda biar server siap
+        Start-Sleep -Seconds 15
         $anyid = ./AnyDesk.exe --get-id
         
-        # Cetak Hasil ke Log biar Gampang Dilihat
         Write-Host "===================================="
-        if ($anyid) {
-            Write-Host "ID ANYDESK KAMU: $anyid"
-        } else {
-            Write-Host "ID BELUM MUNCUL DI LOG"
-            Write-Host "TAPI JANGAN PANIK, CEK TAILSCALE IP!"
-        }
+        Write-Host "ID ANYDESK: $anyid"
         Write-Host "PASSWORD: izan123"
         Write-Host "===================================="
         
-        # 5. Pasang Tailscale (Backup Utama Bos!)
-        Write-Host "Mengaktifkan Tailscale..."
+        # 6. Pasang Tailscale (Jalur Hijau Kamu)
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
-        # GANTI 'TS_AUTH_KEY' DENGAN PUNYA KAMU DI BAWAH INI:
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kDciJMstZt11CNTRL-nNmwmoe4wt59a1UXbMk5u5H1j41nre1j7 --accept-routes
+        # MASUKKAN AUTH KEY TAILSCALE KAMU DI BAWAH:
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kBdSTCmdbm11CNTRL-kY5RzvhucXLsSRcNCgdAXLXeLNvPQ46P8 --accept-routes
         
-        Write-Host "SEMUA SIAP! Mesin akan Online selama 60 Menit."
+        Write-Host "SEMUA SIAP! Langsung hajar pake Password!"
         
-        # 6. Penahan Melek (Bukan Spam)
+        # 7. Penahan Melek 60 Menit
         $timeout = 60
         for ($i = 1; $i -le $timeout; $i++) {
-          Write-Host "Menjaga koneksi tetap hidup... Menit ke-$i"
+          Write-Host "Mesin Melek Menit ke-$i"
           Start-Sleep -Seconds 60
         }
         
