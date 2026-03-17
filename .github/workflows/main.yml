@@ -1,4 +1,4 @@
-name: RDP-LOCALTUNNEL-BEBAS
+name: RDP-LOCALTUNNEL-IP-PASTI
 on:
   workflow_dispatch:
 jobs:
@@ -8,14 +8,16 @@ jobs:
     - name: Gaspol-Localtunnel
       shell: pwsh
       run: |
+        Write-Host "=============================="
+        Write-Host "NIHHH PASSWORD TUNNEL KAMU:"
+        # Pakai --silent biar gak banyak sampah log, langsung angka IP-nya aja
+        $myip = curl.exe --silent https://ifconfig.me
+        Write-Host $myip
+        Write-Host "=============================="
+        
         Write-Host "Lagi instal terowongan..."
-        # Instal localtunnel lewat npm (pasti ada di github)
         npm install -g localtunnel
         
-        Write-Host "=============================="
         Write-Host "TUNGGU LINKNYA MUNCUL DI BAWAH"
-        Write-Host "=============================="
-        
-        # Buka jalur RDP (3389)
         lt --port 3389
         
