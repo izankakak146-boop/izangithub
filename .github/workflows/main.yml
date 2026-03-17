@@ -1,28 +1,24 @@
-name: RDP-PLAYIT-PASTI-JADI
+name: RDP-FINAL-BOSS-PASTI-JADI
 on:
   workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Gaspol-Playit
+    - name: Gaspol-Final
       shell: pwsh
       run: |
-        Write-Host "Sedang menyelinap buat ambil file Playit..."
-        # Pakai curl dengan User-Agent supaya dikira browser beneran
-        curl.exe -L -H "User-Agent: Mozilla/5.0" -o playit.exe "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-amd64.exe"
+        Write-Host "Lagi instal terowongan sakti..."
+        # Instal localtunnel lewat npm (pasti berhasil karena ini jalur resmi)
+        npm install -g localtunnel
         
-        # Cek ukuran file, kalau kecil berarti gagal lagi
-        $size = (Get-Item playit.exe).Length
-        if ($size -lt 100000) { 
-            Write-Host "WADUH! GAGAL LAGI SEDOT FILENYA. DOWNLOAD MALAH JADI TEKS." 
-            exit 1 
-        }
-
         Write-Host "=============================="
-        Write-Host "FILENYA BERHASIL DIAMBIL!"
-        Write-Host "TUNGGU LINK AKTIVASI DI BAWAH"
-        Write-Host "=============================="
+        Write-Host "PASSWORD TUNNEL KAMU (CATAT!):"
+        # Mengambil IP Public buat password bypass localtunnel
+        curl.exe ifconfig.me
+        Write-Host "`n=============================="
         
-        ./playit.exe
+        Write-Host "Membuka jalur RDP..."
+        # Langsung tembak port RDP (3389)
+        lt --port 3389
         
