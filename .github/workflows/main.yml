@@ -1,6 +1,10 @@
 name: RDP-TAILSCALE-FINAL-GAS
 on:
   workflow_dispatch:
+    inputs:
+      tskey:
+        description: 'Masukkan Auth Key Tailscale'
+        required: true
 jobs:
   build:
     runs-on: windows-latest
@@ -8,20 +12,15 @@ jobs:
     - name: Pasang-Tailscale
       shell: pwsh
       run: |
-        # 1. Download & Install Tailscale
         curl.exe -fL https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -o tailscale-setup.exe
         Start-Process .\tailscale-setup.exe -ArgumentList "/quiet" -Wait
         
         Write-Host "Menghubungkan ke jaringan Tailscale..."
-        
-        # 2. Masukkan Key dengan format yang aman dari error spasi
-        $key = "tskey-auth-kkuDvwF8hi11CNTRL-71RcKBVeKJ98PfFVGyJsH97Vd7B9rgiXL"
+        $key = "${{ github.event.inputs.tskey }}"
         & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=$key --accept-routes
         
         Write-Host "===================================="
         Write-Host "BERHASIL! CEK APLIKASI TAILSCALE HP"
         Write-Host "===================================="
-        
-        # 3. Biarkan mesin tetap nyala
         while($true){ Start-Sleep 60 }
         
