@@ -1,4 +1,4 @@
-name: RDP-Sakti-V20
+name: RDP-FINAL-SAKTI-700KBPS
 on:
   workflow_dispatch:
     inputs:
@@ -16,8 +16,17 @@ jobs:
         net localgroup administrators runneradmin /add
         choco install ngrok -y
         ngrok config add-authtoken ${{ github.event.inputs.token }}
-        # Jalankan Ngrok dan biarkan saja, jangan dipaksa ambil IP biar gak error
         Start-Process ngrok -ArgumentList "tcp --region ap 3389"
-        Write-Host "MESIN SUDAH NYALA! JANGAN LIHAT LOG LAGI!"
+        
+        # Nunggu lebih lama (2 menit) biar internet 700kbps sempet konek
+        Write-Host "Sabar Bos, internet lagi lemot, nunggu 2 menit..."
+        Start-Sleep -Seconds 120
+        
+        # Ambil IP dan tampilin berkali-kali biar kelihatan
+        $api = curl.exe -s http://127.0.0.1:4040/api/tunnels | ConvertFrom-Json
+        $hasil = $api.tunnels[0].public_url
+        Write-Host "=============================="
+        Write-Host "ALAMATNYA: $hasil"
+        Write-Host "=============================="
         while($true){ Start-Sleep 60 }
         
