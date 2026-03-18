@@ -1,29 +1,32 @@
-name: RDP-TAILSCALE-IZAN-PASTI-CONNECT
+name: RDP-FREE-PASSWORD-IZAN
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Konfigurasi-RDP-Jalur-Kilat
+    - name: Konfigurasi-Pintu-Terbuka
       shell: pwsh
       run: |
-        # 1. Aktifkan RDP di sistem Windows
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        # 1. Matikan kewajiban password di Registry (NLA off)
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         
-        # 2. Set Password buat user 'runneradmin' jadi 'izan123'
-        net user runneradmin izan123
+        # 2. Aktifkan Restricted Admin Mode (Biar bisa masuk tanpa nanya kredensial)
+        New-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Lsa' -Name "DisableRestrictedAdmin" -Value 0 -PropertyType DWORD -Force
         
-        # 3. Pasang Tailscale (Jalur Privat Kamu)
+        # 3. Hapus password runneradmin (Biar beneran kosong)
+        net user runneradmin ""
+        
+        # 4. Buka Firewall
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        
+        # 5. Pasang Tailscale
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
         # LOGIN TAILSCALE (MASUKKAN KEY KAMU DI SINI)
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kX53Zwu4nZ11CNTRL-hJTzyTLPFGX8KzGxeo3oFXzcvFFj876k --accept-routes
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kJ9admLR8c11CNTRL-5yg3AM4hqrbL61uS4RogrbRh5NNhhFWH --accept-routes
         
-        Write-Host "RDP SIAP! Login pake IP Tailscale & Pass: izan123"
-        
-        # 4. Penahan Melek biar gak mati
+        Write-Host "PINTU SUDAH TERBUKA! Langsung gas masuk!"
         $i = 0; while($i -lt 60) { Start-Sleep -Seconds 60; $i++ }
         
