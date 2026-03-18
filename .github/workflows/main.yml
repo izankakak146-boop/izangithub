@@ -1,32 +1,30 @@
-name: RDP-FREE-PASSWORD-IZAN
+name: RDP-TOTAL-BYPASS
 on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Konfigurasi-Pintu-Terbuka
+    - name: Buka-Semua-Pintu
       shell: pwsh
       run: |
-        # 1. Matikan kewajiban password di Registry (NLA off)
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        # 1. MATIKAN SEMUA PASSWORD & VALIDASI (BIAR GAK NANYA LAGI)
+        reg add "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v UserAuthentication /t REG_DWORD /d 0 /f
+        reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+        reg add "HKLM\System\CurrentControlSet\Control\Lsa" /v DisableRestrictedAdmin /t REG_DWORD /d 1 /f
         
-        # 2. Aktifkan Restricted Admin Mode (Biar bisa masuk tanpa nanya kredensial)
-        New-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Lsa' -Name "DisableRestrictedAdmin" -Value 0 -PropertyType DWORD -Force
-        
-        # 3. Hapus password runneradmin (Biar beneran kosong)
+        # 2. HAPUS PASSWORD USER
         net user runneradmin ""
         
-        # 4. Buka Firewall
+        # 3. AKTIFKAN FIREWALL
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         
-        # 5. Pasang Tailscale
+        # 4. PASANG TAILSCALE
         iwr -useb https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile ts.exe
         Start-Process ./ts.exe -ArgumentList "/quiet /norestart" -Wait
         
         # LOGIN TAILSCALE (MASUKKAN KEY KAMU DI SINI)
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kJ9admLR8c11CNTRL-5yg3AM4hqrbL61uS4RogrbRh5NNhhFWH --accept-routes
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey tskey-auth-kbwiaUVC1G11CNTRL-JqtZhkcaqqNdqr1qRpGzqNfFFyh9J6MN --accept-routes
         
-        Write-Host "PINTU SUDAH TERBUKA! Langsung gas masuk!"
+        Write-Host "Pintu sudah dicopot engselnya! Langsung gas masuk Bos!"
         $i = 0; while($i -lt 60) { Start-Sleep -Seconds 60; $i++ }
         
