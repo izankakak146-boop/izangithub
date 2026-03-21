@@ -13,7 +13,7 @@ jobs:
         
         # 2. MASUKKAN KODE DARI GOOGLE DI BAWAH INI:
         # Ganti seluruh baris di bawah dengan kode yang kamu copy dari Google
-        & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDr-Nn5zyzshGzwen4m18Tjt5UVLhGgUZeln9_ckA6OghxG5Ov9n9qHNStfyp1D6Q" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=123456
+        & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepA-u78zSV8I4W_LeKPm51oFabG5IO9bo5x3H_6PRTZ2umIQsqBKCEWXG7t8uuAg7A" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=123456
         
         # 3. Setting Power agar tidak Sleep (Anti-Offline)
         powercfg /x -hibernate-timeout-ac 0
