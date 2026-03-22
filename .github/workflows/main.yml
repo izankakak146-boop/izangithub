@@ -1,33 +1,27 @@
-name: CRD-24JAM-ANTI-KICK
+name: Windows-CRD-Audio-Full
 on: workflow_dispatch
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Pasang-CRD-dan-Anti-Sleep
-      shell: pwsh
-      run: |
-        # 1. Download & Instal Chrome Remote Desktop
-        iwr https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi -OutFile crd.msi
-        Start-Process msiexec.exe -ArgumentList "/i crd.msi /quiet /norestart" -Wait
-        
-        # 2. MASUKKAN KODE DARI GOOGLE DI BAWAH INI:
-        # Ganti seluruh baris di bawah dengan kode yang kamu copy dari Google
-        & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDP8fg4WCT7nLysrtigDW8hp7rcJ9xXXQoLQC6raahZRlbKs9CeuPif1q96RPAqdA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=123456
-        
-        # 3. Setting Power agar tidak Sleep (Anti-Offline)
-        powercfg /x -hibernate-timeout-ac 0
-        powercfg /x -sleep-timeout-ac 0
-        
-        # 4. Jurus Anti-Kick 24 Jam (Looping tak terbatas)
-        Write-Host "Server ONLINE! Cek di aplikasi Chrome Remote Desktop HP kamu."
-        $i = 0
-        while($true) {
-          $i++
-          Write-Host "Menjaga koneksi... Menit ke-$i"
-          # Simulasi gerakan sistem agar tidak dianggap idle
-          $shell = New-Object -ComObject WScript.Shell
-          $shell.SendKeys('{SCROLLLOCK}')
-          Start-Sleep -Seconds 60
-        }
-        
+      - name: Menginstall Driver Virtual Audio (Agar Tidak Bisu)
+        run: |
+          Invoke-WebRequest https://download.vb-audio.com/Download_Content/VBCABLE_Setup_x64.zip -OutFile VBCable.zip
+          Expand-Archive VBCable.zip -DestinationPath VBCable
+          Start-Process -FilePath "VBCable\VBCABLE_Setup_x64.exe" -ArgumentList "/i /s" -Wait
+          net start audiosrv
+          
+      - name: Menjalankan Konfigurasi Google Remote Desktop
+        run: |
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDYsWnNPqBBaUqd6UBRYcH98faTuIgNUmrm48wHjcvY79NQ9TkpDUn1ZO8TRI3CJw" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+
+      - name: Menjaga RDP Tetap Aktif (Looping)
+        run: |
+          $n = 1000
+          while($n -gt 0) {
+            Write-Host "RDP Sedang Berjalan dengan Dukungan Suara..."
+            Start-Sleep -Seconds 60
+            $n--
+          }
+          
