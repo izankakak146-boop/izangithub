@@ -1,25 +1,29 @@
-name: Windows-CRD-Audio-Fixed
+name: Windows-CRD-Audio-Ultra-Fix
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Persiapan Driver Audio & Aplikasi CRD
+      - name: Install All & Run
         run: |
-          # 1. Install Chrome Remote Desktop & Driver Suara (Otomatis)
+          # 1. Install CRD dan Audio Driver secara paksa
           choco install googlechromeremotedesktop vb-audio-cable -y
           
-          # 2. Aktifkan servis suara Windows
+          # 2. Refresh environment agar aplikasi langsung dikenali
+          Import-Module $env:ProgramData\chocolatey\helpers\chocolateyProfile.psm1
+          Update-SessionEnvironment
+          
+          # 3. Aktifkan servis suara
           net start audiosrv
           
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepAz_-3GmBJamPlAodWklyoB1vagXLWyDxcecC-6EDnPziiJf7pYNVV1rnplf7vUmg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepAqEoGDZW_wEsXMSVeNmJ79gdtCwGF02NPMrRW0nP7Fk6w2DtxZ3MxKBaCnj09MrA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
-      - name: Menjaga RDP Tetap Aktif
+      - name: Keep Alive
         run: |
           $n = 1000
           while($n -gt 0) {
-            Write-Host "RDP Aktif dengan Audio..."
+            Write-Host "RDP Running with Audio..."
             Start-Sleep -Seconds 60
             $n--
           }
