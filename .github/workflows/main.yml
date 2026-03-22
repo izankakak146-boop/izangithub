@@ -24,7 +24,7 @@ jobs:
           # DI BAWAH INI: Langsung tempel kode dari Google (Full apa adanya)
           # JANGAN DIUBAH, JANGAN DITAMBAHIN APA-APA LAGI.
           
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E-UiB-lnDboNKXRGqWsNK-h1Dm2n7FQGZvewvl2oIfQ9lX54AqnWNMQKpkNtIq9NA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=$PIN
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E9-BPrEDj3hSO0VIpJ_QYqF1G4TTQGUagkBahma8H6aCQKBCwxeTk1mfHv3hSJRuQ" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=$PIN
 
       - name: Jaga Server 6 Jam
         run: |
