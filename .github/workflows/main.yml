@@ -1,19 +1,19 @@
-name: Windows-CRD-Audio-Final
+name: Windows-CRD-Audio-Fixed
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Install Audio & Jalankan CRD
+      - name: Persiapan Driver Audio & Aplikasi CRD
         run: |
-          # 1. Install driver suara otomatis (Sekali klik via Choco)
-          choco install vb-audio-cable -y
+          # 1. Install Chrome Remote Desktop & Driver Suara (Otomatis)
+          choco install googlechromeremotedesktop vb-audio-cable -y
           
           # 2. Aktifkan servis suara Windows
           net start audiosrv
           
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepCMvRD8h8W-pgQKuRdKOyUod-l-CyiLh2F7DWnPJx14nIM3Y8J9mfbEv7BraR7Gcg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepAz_-3GmBJamPlAodWklyoB1vagXLWyDxcecC-6EDnPziiJf7pYNVV1rnplf7vUmg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
       - name: Menjaga RDP Tetap Aktif
         run: |
