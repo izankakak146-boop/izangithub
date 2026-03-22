@@ -1,34 +1,31 @@
-name: Windows-CRD-No-Choco-6Hours
+name: Windows-CRD-Official-Only
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Instalasi CRD & Audio (Manual Total)
+      - name: Install Jalur Resmi Google
         run: |
-          # 1. Download CRD MSI
-          Invoke-WebRequest "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd.msi"
+          # 1. Download & Install CRD langsung dari server Google (Resmi)
+          $crdUrl = "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi"
+          Invoke-WebRequest $crdUrl -OutFile "crd.msi"
           Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
 
-          # 2. Download Driver Audio (Virtual Audio Capturer) - Link Mirror Stabil
-          $audioUrl = "https://github.com/rdp-vnc-tools/full-installer/raw/master/Screen-Capturer-Recorder-x64.msi"
-          Invoke-WebRequest $audioUrl -OutFile "audio.msi"
-          Start-Process msiexec.exe -ArgumentList "/i audio.msi /qn /norestart" -Wait
-          
-          # 3. Nyalakan servis suara
-          net start audiosrv 2>$null
+          # 2. Aktifkan fitur audio bawaan Windows Server
+          net start audiosrv
+          reg add "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations" /v ConsoleAudio /t REG_DWORD /d 1 /f
 
-      - name: Eksekusi Kode Google
+      - name: Jalankan Google Remote Desktop
         shell: powershell
         run: |
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDlYeCmy-8ysmte5BwheqFzFTpSxUwnvSVGBwJQhONRXRS2rP6yHMIS6LY09OX6FA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E8BjljFqX7zG0wHInx1qaoH0N9B11mHyF4wwLOCuvym47qkJmVmdfvUsGzd0rMqtA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
-      - name: Tahan Server 6 Jam
+      - name: Online 6 Jam Full
         run: |
           $stop = (Get-Date).AddHours(6)
           while ((Get-Date) -lt $stop) {
-            Write-Host "Server Hidup... Sisa waktu: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
+            Write-Host "Server Resmi Aktif... Sisa waktu: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
             Start-Sleep -Seconds 60
           }
           
