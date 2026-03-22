@@ -1,4 +1,4 @@
-name: Windows-CRD-6Hours-Final-Official
+name: Windows-CRD-6Hours-Instant-PIN
 on: workflow_dispatch
 
 jobs:
@@ -7,25 +7,30 @@ jobs:
     steps:
       - name: Persiapan Driver & App
         run: |
-          # Download & Install CRD Resmi Google
-          $crdUrl = "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi"
-          Invoke-WebRequest $crdUrl -OutFile "crd.msi"
+          # Install CRD Resmi
+          Invoke-WebRequest "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd.msi"
           Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
           
-          # Aktifkan Audio bawaan Windows
+          # Aktifkan Audio
           net start audiosrv
           reg add "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations" /v ConsoleAudio /t REG_DWORD /d 1 /f
 
-      - name: Jalankan Google Remote Desktop
+      - name: Eksekusi Otomatis (Tinggal Tempel)
         shell: powershell
         run: |
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepBIZ75W7U-akcUvzCD3_ypNtj-i78-zkH4Iw_pcSyFiwyBwUtEQPTkVJIEm0twOeg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          # PIN sudah saya set di sini
+          $PIN = "1234567"
+          
+          # DI BAWAH INI: Langsung tempel kode dari Google (Full apa adanya)
+          # JANGAN DIUBAH, JANGAN DITAMBAHIN APA-APA LAGI.
+          
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E-UiB-lnDboNKXRGqWsNK-h1Dm2n7FQGZvewvl2oIfQ9lX54AqnWNMQKpkNtIq9NA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=$PIN
 
-      - name: Menjaga RDP Tetap Aktif 6 Jam
+      - name: Jaga Server 6 Jam
         run: |
           $stop = (Get-Date).AddHours(6)
           while ((Get-Date) -lt $stop) {
-            Write-Host "Server Aktif... Sisa waktu: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
+            Write-Host "Server Aktif. Gunakan PIN: 1234567 untuk masuk. Sisa: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
             Start-Sleep -Seconds 60
           }
           
