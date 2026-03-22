@@ -1,38 +1,30 @@
-name: Windows-CRD-Audio-Search-Method
+name: Windows-CRD-Audio-Final-Fix
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Install CRD & Audio
+      - name: Jalankan Semua Sekaligus
+        shell: powershell
         run: |
-          # 1. Install Driver Suara & CRD via Choco
-          choco install vb-audio-cable googlechromeremotedesktop -y
+          # 1. Install CRD & Audio Driver (Abaikan error jika sudah ada)
+          choco install googlechromeremotedesktop vb-audio-cable -y --accept-license --no-progress
           
-          # 2. Paksa aktifkan servis suara
-          net start audiosrv
+          # 2. Aktifkan Audio (Pakai cara yang lebih halus agar tidak error)
+          Get-Service audiosrv | Set-Service -StartupType Automatic
+          Start-Service audiosrv -ErrorAction SilentlyContinue
           
-      - name: Menjalankan Google Headless (Auto-Search Path)
-        run: |
-          # 3. Cari di mana file remoting_start_host.exe berada secara otomatis
-          $crdPath = (Get-ChildItem -Path "C:\Program Files*" -Filter "remoting_start_host.exe" -Recurse -ErrorAction SilentlyContinue).FullName
-          
-          if ($crdPath) {
-              Write-Host "Ditemukan di: $crdPath"
-              # Jalankan kode dari Google menggunakan path yang sudah ditemukan
-              & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E_LamKXjcA61SilqLcjiZ93S--8BUFn_DN6y-oi01mVwM4YBEWjUgS8n925tIrpcQ" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
-          } else {
-              Write-Error "Aplikasi tidak ditemukan, mencoba cara paksa..."
-              # [MASUKKAN KODE DARI GOOGLE HEADLESS DI SINI]
-          }
+          # 3. Jalankan kode Google (Langsung panggil aplikasinya)
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDx6DMIaS_7LPVSUWsEf3oKbS_uDBDclh23k15Xda8Gfp_xavaqaZZ2cd4SCz_fmA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
       - name: Jaga RDP Tetap Aktif
         run: |
           $n = 1000
           while($n -gt 0) {
-            Write-Host "RDP Aktif - Cek di browser kamu sekarang!"
+            Write-Host "RDP Aktif - Cek di browser kamu!"
             Start-Sleep -Seconds 60
             $n--
           }
+          
           
