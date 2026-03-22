@@ -1,21 +1,25 @@
-name: Windows-CRD-6Hours-Final-Real
+name: Windows-CRD-No-Choco-6Hours
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Setup Audio & CRD (Jalur Cepat)
+      - name: Instalasi CRD & Audio (Manual Total)
         run: |
-          # 1. Download CRD Manual
+          # 1. Download CRD MSI
           Invoke-WebRequest "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd.msi"
           Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
+
+          # 2. Download Driver Audio (Virtual Audio Capturer) - Link Mirror Stabil
+          $audioUrl = "https://github.com/rdp-vnc-tools/full-installer/raw/master/Screen-Capturer-Recorder-x64.msi"
+          Invoke-WebRequest $audioUrl -OutFile "audio.msi"
+          Start-Process msiexec.exe -ArgumentList "/i audio.msi /qn /norestart" -Wait
           
-          # 2. Pakai Driver Audio alternatif yang lebih stabil linknya
-          choco install screencast-receiver -y --no-progress
+          # 3. Nyalakan servis suara
           net start audiosrv 2>$null
-          
-      - name: Jalankan Google Remote Desktop
+
+      - name: Eksekusi Kode Google
         shell: powershell
         run: |
           & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDlYeCmy-8ysmte5BwheqFzFTpSxUwnvSVGBwJQhONRXRS2rP6yHMIS6LY09OX6FA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
@@ -24,7 +28,7 @@ jobs:
         run: |
           $stop = (Get-Date).AddHours(6)
           while ((Get-Date) -lt $stop) {
-            Write-Host "Server Aktif... Sisa waktu: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
+            Write-Host "Server Hidup... Sisa waktu: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
             Start-Sleep -Seconds 60
           }
           
