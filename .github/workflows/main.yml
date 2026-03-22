@@ -1,31 +1,31 @@
-name: Windows-CRD-Official-Only
+name: Windows-CRD-6Hours-Final-Official
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Install Jalur Resmi Google
+      - name: Persiapan Driver & App
         run: |
-          # 1. Download & Install CRD langsung dari server Google (Resmi)
+          # Download & Install CRD Resmi Google
           $crdUrl = "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi"
           Invoke-WebRequest $crdUrl -OutFile "crd.msi"
           Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
-
-          # 2. Aktifkan fitur audio bawaan Windows Server
+          
+          # Aktifkan Audio bawaan Windows
           net start audiosrv
           reg add "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations" /v ConsoleAudio /t REG_DWORD /d 1 /f
 
       - name: Jalankan Google Remote Desktop
         shell: powershell
         run: |
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepCpUVhg_L5nPd_k6g1GHZSJZ7ZbH3jQHDMxflUfkKgQoaY1OqH7LWfH4VYTETCJYA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepBIZ75W7U-akcUvzCD3_ypNtj-i78-zkH4Iw_pcSyFiwyBwUtEQPTkVJIEm0twOeg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
-      - name: Online 6 Jam Full
+      - name: Menjaga RDP Tetap Aktif 6 Jam
         run: |
           $stop = (Get-Date).AddHours(6)
           while ((Get-Date) -lt $stop) {
-            Write-Host "Server Resmi Aktif... Sisa waktu: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
+            Write-Host "Server Aktif... Sisa waktu: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
             Start-Sleep -Seconds 60
           }
           
