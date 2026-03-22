@@ -1,30 +1,24 @@
-name: Windows-CRD-Audio-Manual-Fix
+name: Windows-CRD-6Hours-Final-Real
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Download & Install (Manual Way)
+      - name: Setup Audio & CRD (Jalur Cepat)
         run: |
-          # 1. Download Driver Audio & CRD Langsung (Tanpa Choco)
+          # 1. Download CRD Manual
           Invoke-WebRequest "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd.msi"
-          Invoke-WebRequest "https://download.vb-audio.com/Download_Content/VBCABLE_Setup_x64.zip" -OutFile "vbcable.zip"
-          
-          # 2. Install CRD secara paksa
           Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
           
-          # 3. Ekstrak & Install Audio (Silent)
-          Expand-Archive vbcable.zip -DestinationPath vbcable
-          Start-Process "vbcable\VBCABLE_Setup_x64.exe" -ArgumentList "/i /s" -Wait
-          
-          # 4. Aktifkan servis suara
+          # 2. Pakai Driver Audio alternatif yang lebih stabil linknya
+          choco install screencast-receiver -y --no-progress
           net start audiosrv 2>$null
-
-      - name: Eksekusi Kode Google
+          
+      - name: Jalankan Google Remote Desktop
         shell: powershell
         run: |
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E-nArqhrZFClNGBMCLVFmQhuZgK5Ki601L_bDyrklbdJSdrfLVEQ9MI527r1IJUfQ" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDlYeCmy-8ysmte5BwheqFzFTpSxUwnvSVGBwJQhONRXRS2rP6yHMIS6LY09OX6FA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
       - name: Tahan Server 6 Jam
         run: |
