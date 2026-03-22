@@ -1,30 +1,30 @@
-name: Windows-CRD-Audio-Final-Fix
+name: Windows-CRD-6Hours-Audio
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Jalankan Semua Sekaligus
+      - name: Install CRD & Audio Driver
+        run: |
+          # Install aplikasi & driver suara (Otomatis)
+          choco install googlechromeremotedesktop vb-audio-cable -y --no-progress
+          # Aktifkan servis suara agar tidak bisu
+          net start audiosrv 2>$null
+          
+      - name: Jalankan Google Remote Desktop
         shell: powershell
         run: |
-          # 1. Install CRD & Audio Driver (Abaikan error jika sudah ada)
-          choco install googlechromeremotedesktop vb-audio-cable -y --accept-license --no-progress
-          
-          # 2. Aktifkan Audio (Pakai cara yang lebih halus agar tidak error)
-          Get-Service audiosrv | Set-Service -StartupType Automatic
-          Start-Service audiosrv -ErrorAction SilentlyContinue
-          
-          # 3. Jalankan kode Google (Langsung panggil aplikasinya)
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDx6DMIaS_7LPVSUWsEf3oKbS_uDBDclh23k15Xda8Gfp_xavaqaZZ2cd4SCz_fmA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E-VsN2rpfADbeHaaoxgJO2cszZxfAL9vxig4y4rc2vy-IjKFV0U9RtCWHmyWrwrgA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
-      - name: Jaga RDP Tetap Aktif
+      - name: Menahan Server Agar Online 6 Jam
         run: |
-          $n = 1000
-          while($n -gt 0) {
-            Write-Host "RDP Aktif - Cek di browser kamu!"
+          # Menghitung 6 jam (21600 detik) agar GitHub tidak mematikan server
+          $seconds = 21600
+          $start = Get-Date
+          while ((Get-Date) -lt $start.AddSeconds($seconds)) {
+            $remaining = [math]::Round(($start.AddSeconds($seconds) - (Get-Date)).TotalMinutes)
+            Write-Host "Server Aktif. Sisa waktu: $remaining menit..."
             Start-Sleep -Seconds 60
-            $n--
           }
-          
           
