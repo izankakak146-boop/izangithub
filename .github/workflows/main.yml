@@ -1,26 +1,25 @@
-name: Windows-CRD-Audio-Full
+name: Windows-CRD-Audio-Final
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Menginstall Driver Virtual Audio (Agar Tidak Bisu)
+      - name: Install Audio & Jalankan CRD
         run: |
-          Invoke-WebRequest https://download.vb-audio.com/Download_Content/VBCABLE_Setup_x64.zip -OutFile VBCable.zip
-          Expand-Archive VBCable.zip -DestinationPath VBCable
-          Start-Process -FilePath "VBCable\VBCABLE_Setup_x64.exe" -ArgumentList "/i /s" -Wait
+          # 1. Install driver suara otomatis (Sekali klik via Choco)
+          choco install vb-audio-cable -y
+          
+          # 2. Aktifkan servis suara Windows
           net start audiosrv
           
-      - name: Menjalankan Konfigurasi Google Remote Desktop
-        run: |
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepDYsWnNPqBBaUqd6UBRYcH98faTuIgNUmrm48wHjcvY79NQ9TkpDUn1ZO8TRI3CJw" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepCMvRD8h8W-pgQKuRdKOyUod-l-CyiLh2F7DWnPJx14nIM3Y8J9mfbEv7BraR7Gcg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
-      - name: Menjaga RDP Tetap Aktif (Looping)
+      - name: Menjaga RDP Tetap Aktif
         run: |
           $n = 1000
           while($n -gt 0) {
-            Write-Host "RDP Sedang Berjalan dengan Dukungan Suara..."
+            Write-Host "RDP Aktif dengan Audio..."
             Start-Sleep -Seconds 60
             $n--
           }
