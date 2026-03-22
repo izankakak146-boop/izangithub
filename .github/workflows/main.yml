@@ -1,29 +1,30 @@
-name: Windows-CRD-Audio-Ultra-Fix
+name: Windows-CRD-Audio-Force-Work
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Install All & Run
+      - name: Install CRD & Audio Driver Manual
         run: |
-          # 1. Install CRD dan Audio Driver secara paksa
-          choco install googlechromeremotedesktop vb-audio-cable -y
+          # 1. Download dan Install Chrome Remote Desktop secara manual (Bukan lewat Choco)
+          $crdUrl = "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi"
+          Invoke-WebRequest $crdUrl -OutFile "crd.msi"
+          Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
           
-          # 2. Refresh environment agar aplikasi langsung dikenali
-          Import-Module $env:ProgramData\chocolatey\helpers\chocolateyProfile.psm1
-          Update-SessionEnvironment
-          
-          # 3. Aktifkan servis suara
+          # 2. Install Audio Driver via Choco (Ini biasanya lebih stabil untuk audio)
+          choco install vb-audio-cable -y
           net start audiosrv
           
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepAqEoGDZW_wEsXMSVeNmJ79gdtCwGF02NPMrRW0nP7Fk6w2DtxZ3MxKBaCnj09MrA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+      - name: Run Google Headless Code
+        run: |
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepATlW-kSRIV23atqlCJYwdBKUQ312GlsBwVSPF47kKyHqoV6EnGvp9-LZJky4nccA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
 
-      - name: Keep Alive
+      - name: Loop Keep Alive
         run: |
           $n = 1000
           while($n -gt 0) {
-            Write-Host "RDP Running with Audio..."
+            Write-Host "RDP Aktif - Cek Koneksi di Browser..."
             Start-Sleep -Seconds 60
             $n--
           }
