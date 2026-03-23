@@ -1,0 +1,37 @@
+name: Windows-CRD-Auto-Audio-Force
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Suntik Driver & Paksa Deteksi
+        run: |
+          # 1. Install CRD Resmi
+          Invoke-WebRequest "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd.msi"
+          Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
+
+          # 2. Install Driver Audio Virtual (Link Langsung)
+          Invoke-WebRequest "https://github.com/rdp-vnc-tools/full-installer/raw/master/Screen-Capturer-Recorder-x64.msi" -OutFile "audio.msi"
+          Start-Process msiexec.exe -ArgumentList "/i audio.msi /qn /norestart" -Wait
+
+          # 3. CARA CURANG: Paksa Registry buat Aktifin Audio Remote & Service
+          reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations" /v ConsoleAudio /t REG_DWORD /d 1 /f
+          reg add "HKCU\Software\Microsoft\Multimedia\Audio" /v UserPreferredPlaybackDevice /t REG_SZ /d "virtual-audio-capturer" /f
+          
+          # Paksa Audio Service Jalan & Berjalan Otomatis
+          sc.exe config audiosrv start= auto
+          net start audiosrv
+          net start AudioEndpointBuilder
+
+      - name: Eksekusi Kode Google (Auto PIN)
+        shell: powershell
+        run: |
+          $PIN = "1234567"
+          # TEMPEL KODE GOOGLE KAMU DI BAWAH INI
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepBSSB_hEf26N0dLlVPTJLI-e8m4rtO-62oPdYQO8IqxmsVBLzGYozbGVs9FxGuvlg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=$PIN
+
+      - name: Jaga Server 6 Jam
+        run: |
+          while($true) { Write-Host "Server Aktif & Audio Dipaksa Jalan..."; Start-Sleep -Seconds 60 }
+          
