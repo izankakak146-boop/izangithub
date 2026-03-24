@@ -29,7 +29,7 @@ jobs:
         shell: powershell
         run: |
           $PIN = "1234567"
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0AfrIepBdmM5y_kp7a39BmKvRZvKRr3nTT_ANgkqHR5Ybb5XdT5fj8MvocZtSMugSPIXHSA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=$PIN
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E9usohYvs0Gp_SNAzIiSx5jhBPR0sZwaTcY4CL93xpkQu9fShuSm_tgGQb_7p0eWA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=$PIN
 
       - name: Online 6 Jam
         run: |
