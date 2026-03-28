@@ -16,7 +16,7 @@ jobs:
 
       - name: Setup Android Emulator (Docker)
         run: |
-          # Menjalankan container Android Redroid
+          # Menjalankan container Android Redroid 11 (Stabil)
           docker run -d --privileged \
             --name redroid \
             -p 5555:5555 \
@@ -27,14 +27,39 @@ jobs:
 
       - name: Setup Display & VNC
         run: |
+          # Jalankan layar virtual
           Xvfb :1 -screen 0 720x1280x24 &
-          sleep 3
-          x11vnc -display :1 -nopw -forever -bg -rfbport 5900 &
+          sleep 5
+          # Jalankan VNC tanpa password agar gampang diakses
+          x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
 
       - name: Connect Web VNC (noVNC)
         run: |
+          # Jalankan bridge noVNC di port 6080
           /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080 &
 
+      - name: Setup Tunnel (Ngrok)
+        run: |
+          # Install Ngrok secara resmi
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt-get update && sudo apt-get install ngrok -y
+          
+          # KONFIGURASI TOKEN KAMU (SUDAH SAYA MASUKKAN)
+          3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
+          
+          # Jalankan Tunnel ke port noVNC
+          ngrok http 6080 --log=stdout &
+          sleep 15
+          
+          echo "===================================================="
+          echo "SALIN LINK DI BAWAH INI DAN BUKA DI BROWSER HP:"
+          curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+          echo "===================================================="
+
+      - name: Keep Alive
+        run: sleep 21600 # Biarkan hidup selama 6 jam
+        
       - name: Setup Tunnel (Ngrok)
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
