@@ -1,36 +1,58 @@
-name: Windows-CRD-6Hours-Instant-PIN
-on: workflow_dispatch
+name: Android VNC Simulation
+on: 
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: windows-latest
+  run-android:
+    runs-on: ubuntu-latest
     steps:
-      - name: Persiapan Driver & App
-        run: |
-          # Install CRD Resmi
-          Invoke-WebRequest "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd.msi"
-          Start-Process msiexec.exe -ArgumentList "/i crd.msi /qn /norestart" -Wait
-          
-          # Aktifkan Audio
-          net start audiosrv
-          reg add "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations" /v ConsoleAudio /t REG_DWORD /d 1 /f
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Eksekusi Otomatis (Tinggal Tempel)
-        shell: powershell
+      - name: Install Virtualization & VNC Server
         run: |
-          # PIN sudah saya set di sini
-          $PIN = "1234567"
-          
-          # DI BAWAH INI: Langsung tempel kode dari Google (Full apa adanya)
-          # JANGAN DIUBAH, JANGAN DITAMBAHIN APA-APA LAGI.
-          
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E9-BPrEDj3hSO0VIpJ_QYqF1G4TTQGUagkBahma8H6aCQKBCwxeTk1mfHv3hSJRuQ" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=$PIN
+          sudo apt-get update
+          sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager fluxbox x11vnc xvfb novnc jq
 
-      - name: Jaga Server 6 Jam
+      - name: Setup Android Emulator (Docker)
         run: |
-          $stop = (Get-Date).AddHours(6)
-          while ((Get-Date) -lt $stop) {
-            Write-Host "Server Aktif. Gunakan PIN: 1234567 untuk masuk. Sisa: $([math]::Round(($stop - (Get-Date)).TotalMinutes)) menit"
-            Start-Sleep -Seconds 60
-          }
+          # Menjalankan container Android Redroid
+          docker run -d --privileged \
+            --name redroid \
+            -p 5555:5555 \
+            redroid/redroid:11.0.0-latest \
+            androidboot.redroid_width=720 \
+            androidboot.redroid_height=1280 \
+            androidboot.redroid_fps=30
+
+      - name: Setup Display & VNC
+        run: |
+          Xvfb :1 -screen 0 720x1280x24 &
+          sleep 3
+          x11vnc -display :1 -nopw -forever -bg -rfbport 5900 &
+
+      - name: Connect Web VNC (noVNC)
+        run: |
+          /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080 &
+
+      - name: Setup Tunnel (Ngrok)
+        run: |
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt-get update && sudo apt-get install ngrok
           
+          # ==========================================
+          # MASUKKAN TOKEN NGROK DI BAWAH INI
+          # ==========================================
+           3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
+          
+          ngrok http 6080 --log=stdout &
+          sleep 10
+          echo "============================================"
+          echo "KLIK LINK DI BAWAH INI UNTUK BUKA ANDROID:"
+          curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+          echo "============================================"
+
+      - name: Keep Alive
+        run: sleep 21600 # Tetap aktif selama 6 jam
+        
