@@ -1,4 +1,4 @@
-name: Android VNC Free LT
+name: Android VNC Stable
 on: 
   workflow_dispatch:
 
@@ -6,39 +6,42 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Tools & LT
+      - name: Install All-in-One
         run: |
           sudo apt-get update
           sudo apt-get install -y x11vnc xvfb adb scrcpy jq
-          # Install Localtunnel (LT) pengganti Ngrok
           sudo npm install -g localtunnel
 
-      - name: Setup Android 8.1
+      - name: Run Android Container
         run: |
           docker run -d --privileged \
-            --name redroid_new \
+            --name redroid_final \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
             androidboot.redroid_fps=15
 
-      - name: Launch VNC Server
+      - name: Force Connection & Launch VNC
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 3
-          adb kill-server && adb start-server
-          until adb connect localhost:5555; do sleep 1; done
+          sleep 5
+          # Loop sampai bener-bener konek ke localhost:5555
+          echo "MENUNGGU ANDROID ONLINE..."
+          until adb connect localhost:5555; do
+            echo "Gagal konek, coba lagi dalam 2 detik..."
+            sleep 2
+          done
           adb -s localhost:5555 wait-for-device
+          echo "ANDROID SIAP! MEMBUKA LAYAR..."
           DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M --always-on-top &
-          # Port VNC tetap 5900
+          sleep 3
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
       - name: Launch Tunnel
         run: |
           echo "===================================================="
-          echo "TUNGGU LINK DI BAWAH INI MUNCUL"
-          echo "DIPERLUKAN UNTUK VNC VIEWER:"
-          # Tembak port 5900 ke publik pakai Localtunnel
+          echo "LINK BERIKUT UNTUK ALAMAT DI RVNC VIEWER:"
+          # Pakai Localtunnel biar gak perlu kartu kredit
           lt --port 5900
           
