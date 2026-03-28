@@ -9,15 +9,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Tools
+      - name: Install All Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip
+          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip adb
           pip3 install websockify
 
       - name: Setup Android Container
         run: |
-          # Pakai Android 9 karena paling stabil di GitHub Actions
+          # Pakai versi 9 karena paling ringan untuk Advan X1 kamu
           docker run -d --privileged \
             --name redroid \
             -p 5555:5555 \
@@ -26,20 +26,28 @@ jobs:
             androidboot.redroid_height=854 \
             androidboot.redroid_fps=15 \
             androidboot.use_mesa=1
+          
+          echo "Menunggu Android booting..."
+          sleep 40
 
-      - name: Start Virtual Display
+      - name: Start Virtual Display & Bridge
         run: |
           Xvfb :1 -screen 0 480x854x16 &
           sleep 5
-          # Jalankan VNC langsung ke layar virtual tanpa perantara ADB yang ribet
+          DISPLAY=:1 fluxbox &
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
+          python3 -m websockify --web /usr/share/novnc/ 6080 localhost:5900 &
           sleep 5
 
-      - name: Run noVNC Bridge
+      - name: Force Android Screen to Display
         run: |
-          # Menghubungkan layar virtual ke browser kamu
-          python3 -m websockify --web /usr/share/novnc/ 6080 localhost:5900 &
-          sleep 10
+          # Hubungkan ADB dan paksa layar menyala
+          adb connect localhost:5555 || true
+          sleep 5
+          # Simulasikan tekan tombol HOME berkali-kali untuk memancing gambar
+          adb -s localhost:5555 shell input keyevent 3
+          adb -s localhost:5555 shell input keyevent 3
+          echo "Android dipancing untuk muncul..."
 
       - name: Setup Ngrok
         run: |
@@ -50,7 +58,7 @@ jobs:
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "KLIK LINK INI DI HP ADVAN X1 KAMU:"
+          echo "LINK FINAL (JANGAN MENYERAH!):"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
