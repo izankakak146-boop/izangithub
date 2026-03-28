@@ -12,7 +12,9 @@ jobs:
       - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq
+          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip
+          # Pastikan noVNC terinstall dengan benar di lokasi standar
+          sudo ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
 
       - name: Setup Android Container
         run: |
@@ -26,27 +28,27 @@ jobs:
 
       - name: Start Display and VNC
         run: |
-          # Jalankan layar virtual
           Xvfb :1 -screen 0 720x1280x24 &
-          sleep 10
-          # Jalankan VNC server
+          sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
           sleep 5
-          # Jalankan noVNC (Monitor Web) dengan port 6080 yang dipaksa aktif
+          # Jalankan noVNC secara spesifik di localhost
           /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080 &
-          sleep 15
+          sleep 10
 
       - name: Setup Ngrok and Tunnel
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt-get update && sudo apt-get install ngrok -y && ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
+          sudo apt-get update && sudo apt-get install ngrok -y
           
-          # Jalankan Tunnel ke HTTP port 6080
-          ngrok http 6080 --log=stdout &
+          ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
+          
+          # PERBAIKAN UTAMA: Paksa Ngrok ke alamat lokal 127.0.0.1
+          ngrok http 127.0.0.1:6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "TUNGGU 1 MENIT SEBELUM KLIK LINK DI BAWAH INI:"
+          echo "LINK MONITOR ANDROID (TUNGGU 30 DETIK):"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
