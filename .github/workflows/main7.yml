@@ -1,4 +1,4 @@
-name: Android 6H - ANTI HANTU & BENTROK
+name: Android 6H - FINAL SUPER STABIL
 on: 
   workflow_dispatch:
 
@@ -13,50 +13,49 @@ jobs:
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
 
-      - name: 2. 🧹 PEMBERSIHAN TOTAL (FORCED)
+      - name: 2. 🧹 Bersih Total
         run: |
-          # Matikan semua yang lari tanpa ampun
           docker rm -f $(docker ps -aq) || true
           adb kill-server || true
-          # Hapus socket ADB yang mungkin nyangkut di sistem
-          sudo rm -f /tmp/adb* || true
+          sudo fuser -k 5037/tcp || true
+          sudo fuser -k 5577/tcp || true
 
-      - name: 3. Launch Android (ID UNIK)
+      - name: 3. Launch Android 9 (Ringan & Cepat)
         run: |
-          # Kita pakai port 5566, bukan 5555, biar nggak bentrok sama hantu lama
-          docker run -d --privileged --name android_izan_final -p 5566:5555 \
-          redroid/redroid:11.0.0-latest \
+          docker run -d --privileged --name android_izan -p 5577:5555 \
+          redroid/redroid:9.0.0-latest \
           androidboot.redroid_width=480 androidboot.redroid_height=854 \
-          androidboot.redroid_fps=30 redroid.gpu.mode=guest
+          redroid.gpu.mode=guest
 
-      - name: 4. 🚀 KONEKSI TARGET SPESIFIK
+      - name: 4. 🚀 Koneksi Kilat
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 15
-          # Kita tembak port 5566 yang baru kita buat tadi
-          adb connect localhost:5566
-          # Perintah WAJIB: Kasih tau adb cuma liat ke localhost:5566
-          adb -s localhost:5566 wait-for-device
-          adb -s localhost:5566 shell input keyevent 26
-          
-          DISPLAY=:1 scrcpy -s localhost:5566 --max-fps 30 --bit-rate 4M --always-on-top &
+          sleep 10
+          echo "Memulai pancingan koneksi..."
+          until adb connect localhost:5577; do
+            echo "Menunggu Android 9 bangun..."
+            sleep 5
+          done
+          adb -s localhost:5577 wait-for-device
+          adb -s localhost:5577 shell input keyevent 26
+          DISPLAY=:1 scrcpy -s localhost:5577 --max-fps 30 --bit-rate 4M --always-on-top &
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
       - name: 🌐 AMBIL LINK DISINI
         run: |
           nohup cloudflared tunnel --url tcp://localhost:5900 > cf.log 2>&1 &
-          echo "Menunggu link sakti keluar..."
           for i in {1..20}; do
             sleep 5
             LINK=$(grep -o '[a-zA-Z0-9.-]*\.trycloudflare\.com:[0-9]*' cf.log | head -n 1)
             if [ ! -z "$LINK" ]; then
-              echo "✅ LINK BERHASIL: $LINK"
+              echo "✅ LINK DIDAPAT: $LINK"
               echo "### ✅ ALAMAT RVNC: \`$LINK\`" >> $GITHUB_STEP_SUMMARY
               exit 0
             fi
+            echo "Mencari jalur ($i/20)..."
           done
           exit 1
 
-      - name: 🕒 STANDBY
+      - name: 🕒 STANDBY 6 JAM
         run: sleep 21600
         
