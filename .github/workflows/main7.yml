@@ -1,4 +1,4 @@
-name: Android Final Solution
+name: Direct Android Browser
 on: 
   workflow_dispatch:
 
@@ -6,62 +6,44 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Tools
+      - name: Install ws-scrcpy & Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y fluxbox x11vnc xvfb novnc jq adb xterm scrcpy python3-pip
-          pip3 install websockify
-          # Bersihkan sisa-sisa adb lama
-          adb kill-server
+          sudo apt-get install -y adb jq
+          # Install penampil android khusus browser
+          sudo npm install -g ws-scrcpy
 
-      - name: Setup Android (Fast Boot)
+      - name: Launch Android Container
         run: |
-          # Pakai Android 8.1 karena paling ringan dan jarang rewel
           docker run -d --privileged \
-            --name redroid_final \
+            --name redroid \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
             androidboot.redroid_fps=15
 
-      - name: Launch Visual Interface
+      - name: Connect & Start Bridge
         run: |
-          # 1. Start Virtual Screen
-          Xvfb :1 -screen 0 480x854x16 &
-          sleep 3
-          DISPLAY=:1 fluxbox &
-          
-          # 2. Jalankan VNC & Websockify (Pintu utama browser)
-          x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
-          sleep 2
-          websockify --web /usr/share/novnc/ 6080 localhost:5900 &
-          
-          # 3. Terminal Tukang Paksa (Cuma urus satu device)
-          DISPLAY=:1 xterm -geometry 60x10+10+10 -e "
-          echo 'MEMBERSIHKAN JALUR...';
-          adb start-server;
-          until adb connect localhost:5555; do sleep 1; done;
-          adb -s localhost:5555 wait-for-device;
-          echo 'ANDROID ONLINE! MEMBUKA LAYAR...';
-          # Paksa scrcpy fokus ke satu target tanpa opsi ribet
-          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M --always-on-top;
-          bash" &
+          # Tunggu android nyala sebentar
+          sleep 10
+          adb connect localhost:5555
+          adb wait-for-device
+          # Jalankan server penampil browser di port 8000
+          nohup ws-scrcpy > /dev/null 2>&1 &
+          sleep 5
 
-      - name: Setup Ngrok
+      - name: Setup Ngrok Direct
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt-get update && sudo apt-get install ngrok -y
           ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
-          # Pastikan Ngrok menembak port 6080 yang sudah di-websockify
-          ngrok http 6080 --log=stdout &
-          sleep 15
+          # Ngrok langsung tembak ke port penampil (8000)
+          ngrok http 8000 --log=stdout &
+          sleep 10
           echo "===================================================="
-          echo "LINK BARU (TUNGGU 30 DETIK SEBELUM KLIK):"
+          echo "KLIK LINK INI DI BROWSER HP:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
