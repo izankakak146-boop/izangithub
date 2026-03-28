@@ -1,4 +1,4 @@
-name: Android 6H Clean VNC
+name: Android 6H Smooth Performance
 on: 
   workflow_dispatch:
 
@@ -12,61 +12,54 @@ jobs:
           sudo apt-get install -y x11vnc xvfb adb scrcpy jq
           sudo npm install -g localtunnel
 
-      - name: 🧹 BERSIHKAN TOTAL SISA EMULATOR
+      - name: 🧹 SAPU BERSIH HANTU EMULATOR
         run: |
-          echo "Menghapus semua hantu emulator..."
-          # Hapus semua container yang nyangkut
+          # Hapus sisa-sisa run sebelumnya biar gak bentrok
           docker rm -f $(docker ps -aq) || true
-          docker network prune -f || true
-          # Matikan ADB lama
           adb kill-server || true
 
-      - name: Setup Android Segar
+      - name: Launch Android (CPU Tanpa Batas)
         run: |
+          # Kita lepas limit CPU-nya biar gak ngeframe
           docker run -d --privileged \
-            --name android_utama \
+            --name android_lancar \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
-            androidboot.redroid_fps=15 \
+            androidboot.redroid_fps=30 \
             redroid.gpu.mode=guest
 
-      - name: Koneksi & VNC
+      - name: Force Connection (High Priority)
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 10
+          sleep 15
           adb start-server
           
-          echo "Menghubungkan ke Android..."
-          # Loop sampai bener-bener konek ke localhost:5555
+          # Coba konek paksa ke port 5555
           until adb connect localhost:5555; do
-            echo "Gagal, coba lagi..."
+            echo "Masih usaha konek..."
             sleep 2
           done
           
           adb -s localhost:5555 wait-for-device
-          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 1.5M --always-on-top &
+          # Naikin FPS ke 30 biar smooth
+          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 30 --bit-rate 4M --always-on-top &
           sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: Buka Jalur & Tunnel Password
+      - name: Buka Jalur Localtunnel
         run: |
           echo "===================================================="
-          echo "IP UNTUK PASSWORD LOCALTUNNEL (JIKA DIMINTA):"
+          echo "PASSWORD IP (CEK DULU SEBELUM BUKA VNC):"
           curl -s https://loca.lt/mytunnelpassword
           echo -e "\n===================================================="
-          # Menjalankan tunnel di background agar step berikutnya bisa jalan
           nohup lt --port 5900 > lt.log 2>&1 &
-          sleep 5
-          echo "LINK VNC KAMU:"
+          sleep 10
+          echo "ALAMAT UNTUK RVNC VIEWER:"
           cat lt.log | grep -o 'https://[^ ]*'
           echo "===================================================="
 
-      - name: 🕒 KEEP ALIVE (6 JAM)
-        run: |
-          echo "Android sedang berjalan... Server akan tetap online selama 6 jam."
-          echo "Silakan gunakan RVNC Viewer kamu."
-          # Ini perintah biar nggak mati 1 detik kemudian
-          sleep 21600
-          
+      - name: 🕒 STANDBY 6 JAM
+        run: sleep 21600
+        
