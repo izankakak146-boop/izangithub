@@ -1,4 +1,4 @@
-name: Android 6H Cloudflared
+name: Android 6H Brutal Edition
 on: 
   workflow_dispatch:
 
@@ -6,23 +6,30 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Tools
+      - name: 1. Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y x11vnc xvfb adb scrcpy
-          # Download Cloudflared (Argo Tunnel)
+          sudo apt-get install -y x11vnc xvfb adb scrcpy jq
+          # Download Cloudflared (Jalur paling stabil anti-ngelag)
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
 
-      - name: 🧹 Bersihkan Hantu
+      - name: 2. 🧹 BERSERSIH TOTAL (BRUTAL MODE)
         run: |
+          echo "Membasmi semua sisa proses..."
+          docker kill $(docker ps -q) || true
           docker rm -f $(docker ps -aq) || true
-          adb kill-server || true
+          docker system prune -af || true
+          adb kill-server
+          adb start-server
+          # Paksa kosongkan port adb biar gak bentrok
+          sudo fuser -k 5037/tcp || true
+          sudo fuser -k 5555/tcp || true
 
-      - name: Launch Android Full Power
+      - name: 3. Launch Android (Full Power)
         run: |
           docker run -d --privileged \
-            --name android_utama \
+            --name android_baru \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
@@ -30,30 +37,45 @@ jobs:
             androidboot.redroid_fps=30 \
             redroid.gpu.mode=guest
 
-      - name: 🚀 Koneksi Paksa & VNC
+      - name: 4. 🚀 Koneksi Paksa & VNC (Target Spesifik)
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 30
-          adb start-server
-          # Gebukin koneksi sampai tembus
-          until adb connect localhost:5555; do echo "Nunggu Android..."; sleep 5; done
-          adb wait-for-device
+          sleep 20
+          echo "Menghubungkan ke device spesifik..."
+          # Loop gebukin koneksi sampai tembus
+          until adb connect localhost:5555; do
+            echo "Nunggu pintu terbuka..."
+            sleep 5
+          done
+          
+          adb -s localhost:5555 wait-for-device
+          echo "✅ BERHASIL KONEK KE ANDROID!"
+          
+          # Jalankan layar dengan bit-rate tinggi biar gak burik
           DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 30 --bit-rate 4M --always-on-top &
           sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: 🌐 Buka Jalur Cloudflared (No-Nyangkut)
+      - name: 5. 🌐 Buka Jalur Cloudflare (Link Langsung Muncul)
         run: |
-          echo "============================================"
-          echo "MENYIAPKAN LINK CLOUDFLARE..."
-          # Jalankan tunnel tanpa butuh login/token
+          echo "===================================================="
+          echo "MENYIAPKAN TUNNEL CLOUDFLARE..."
           nohup cloudflared tunnel --url tcp://localhost:5900 > cloudflare.log 2>&1 &
-          sleep 10
-          echo "ALAMAT UNTUK RVNC VIEWER:"
-          # Cari link .trycloudflare.com di log
-          grep -o 'tcp://[a-zA-Z0-9.-]*\.trycloudflare\.com:[0-9]*' cloudflare.log || echo "Gagal dapet link, coba cek log manual"
-          echo "============================================"
+          
+          # Paksa cari link di dalam log selama 1 menit
+          for i in {1..12}; do
+            sleep 5
+            if grep -q "trycloudflare.com" cloudflare.log; then
+              echo "✅ ALAMAT UNTUK RVNC VIEWER KAMU:"
+              grep -o 'tcp://[a-zA-Z0-9.-]*\.trycloudflare\.com:[0-9]*' cloudflare.log
+              break
+            fi
+            echo "Masih mencari jalur aman ($i/12)..."
+          done
+          echo "===================================================="
 
-      - name: 🕒 STANDBY 6 JAM
-        run: sleep 21600
-        
+      - name: 6. 🕒 STANDBY 6 JAM
+        run: |
+          echo "Android sedang lari kencang! Jangan tutup tab ini."
+          sleep 21600
+          
