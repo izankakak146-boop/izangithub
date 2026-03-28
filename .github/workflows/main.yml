@@ -17,7 +17,6 @@ jobs:
 
       - name: Setup Android Container
         run: |
-          # Menarik image redroid (proses 'pulling' di log kamu)
           docker run -d --privileged \
             --name redroid \
             -p 5555:5555 \
@@ -29,34 +28,35 @@ jobs:
 
       - name: Visual & Super Auto-Launch
         run: |
-          # Menjalankan display virtual
           Xvfb :1 -screen 0 480x854x16 &
           sleep 5
           DISPLAY=:1 fluxbox &
           
-          # Terminal 1: Otomatis menghubungkan ADB
+          # Terminal 1: Tukang Paksa ADB Sampai Online
           DISPLAY=:1 xterm -geometry 60x10+10+10 -e "
-          echo 'TAHAP 1: MENGHUBUNGKAN ADB...';
+          echo 'TAHAP 1: MENUNGGU ANDROID ONLINE...';
           until adb connect localhost:5555 | grep -q 'connected'; do
-            echo 'Menunggu koneksi...';
+            echo 'Mencoba menyambung...';
             sleep 2;
           done;
-          echo 'ADB BERHASIL TERHUBUNG!';
+          echo 'CONNECTED! MENUNGGU STATE ONLINE...';
+          # Memaksa tunggu sampai statusnya benar-benar 'device' bukan 'offline'
           adb -s localhost:5555 wait-for-device;
+          echo 'ANDROID SIAP!';
           bash" &
 
-          # Terminal 2: Memaksa layar muncul (VERSI PERBAIKAN)
+          # Terminal 2: Tukang Paksa Layar (Looping Tanpa Ampun)
           DISPLAY=:1 xterm -geometry 60x10+10+250 -e "
           echo 'TAHAP 2: MEMAKSA LAYAR MUNCUL...';
-          sleep 15;
-          # Menghapus opsi yang bikin error di log sebelumnya
-          until DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --window-title 'Android-AdvanX1'; do
-            echo 'Gagal memuat layar, mencoba lagi dalam 3 detik...';
-            sleep 3;
+          # Kasih waktu nafas lebih lama buat sistem (30 detik)
+          sleep 30;
+          until DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M; do
+            echo 'Android masih loading, mencoba lagi dlm 5 detik...';
+            adb connect localhost:5555;
+            sleep 5;
           done;
           bash" &
           
-          # Menjalankan VNC Server dan NoVNC
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
           python3 -m websockify --web /usr/share/novnc/ 6080 localhost:5900 &
 
@@ -65,12 +65,11 @@ jobs:
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt-get update && sudo apt-get install ngrok -y
-          # Menggunakan Token kamu yang sudah aktif
           ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "LINK BARU (TUNGGU 20 DETIK SETELAH BUKA):"
+          echo "LINK BARU:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
