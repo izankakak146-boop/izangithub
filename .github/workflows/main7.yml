@@ -1,4 +1,4 @@
-name: Android 6H Ultra-Pancing
+name: Android 6H FINAL - Link Langsung Muncul
 on: 
   workflow_dispatch:
 
@@ -6,78 +6,56 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Install Tools & Cloudflared
+      - name: 1. Persiapan Alat
         run: |
           sudo apt-get update
-          sudo apt-get install -y x11vnc xvfb adb scrcpy jq
+          sudo apt-get install -y x11vnc xvfb adb scrcpy
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
 
-      - name: 2. 🧹 Bersih Brutal (Anti-Hantu)
+      - name: 2. 🧹 Bersih Total
         run: |
-          docker kill $(docker ps -q) || true
           docker rm -f $(docker ps -aq) || true
-          docker system prune -af || true
-          adb kill-server
-          adb start-server
-          sudo fuser -k 5037/tcp || true
+          adb kill-server || adb start-server
           sudo fuser -k 5555/tcp || true
 
-      - name: 3. Launch Android 11 (Versi Cepat)
+      - name: 3. Launch Android 11
         run: |
-          # Pakai Android 11 karena lebih stabil di server GitHub
-          docker run -d --privileged \
-            --name android_izan \
-            -p 5555:5555 \
-            redroid/redroid:11.0.0-latest \
-            androidboot.redroid_width=480 \
-            androidboot.redroid_height=854 \
-            androidboot.redroid_fps=30 \
-            redroid.gpu.mode=guest
+          docker run -d --privileged --name android_izan -p 5555:5555 \
+          redroid/redroid:11.0.0-latest \
+          androidboot.redroid_width=480 androidboot.redroid_height=854 \
+          androidboot.redroid_fps=30 redroid.gpu.mode=guest
 
-      - name: 4. ⚡ Trigger Pancingan (Bangunkan Android)
+      - name: 4. 🚀 Bangunkan Android
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 10
-          echo "Memulai pancingan koneksi..."
-          # Loop gebukin sampai bangun
-          for i in {1..50}; do
-            if adb connect localhost:5555 | grep -q "connected"; then
-              echo "✅ PINTU TERBUKA!"
-              break
-            fi
-            echo "Pancingan ke-$i: Android masih tidur..."
-            sleep 3
-          done
-          
-          adb -s localhost:5555 wait-for-device
-          # Kirim perintah tombol Power & Home buat pancing OS-nya kerja
-          adb -s localhost:5555 shell input keyevent 26
-          adb -s localhost:5555 shell input keyevent 3
-          echo "✅ ANDROID DIPAKSA BANGUN!"
-          
+          sleep 15
+          adb connect localhost:5555 || true
+          adb wait-for-device
+          adb shell input keyevent 26
           DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 30 --bit-rate 4M --always-on-top &
-          sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: 5. 🌐 Pancing Link Keluar (Cloudflare)
+      - name: 🌐 KLIK DISINI - LINK RVNC AKAN MUNCUL DIBAWAH
         run: |
-          echo "===================================================="
-          echo "MENERBITKAN LINK TUNNEL..."
-          nohup cloudflared tunnel --url tcp://localhost:5900 > cloudflare.log 2>&1 &
-          
-          # Paksa cari link sampai dapet
-          for i in {1..20}; do
+          nohup cloudflared tunnel --url tcp://localhost:5900 > cf.log 2>&1 &
+          echo "Sedang memancing link... Tunggu 30 detik."
+          for i in {1..15}; do
             sleep 5
-            if grep -q "trycloudflare.com" cloudflare.log; then
-              echo "✅ INI LINK RVNC VIEWER KAMU:"
-              grep -o 'tcp://[a-zA-Z0-9.-]*\.trycloudflare\.com:[0-9]*' cloudflare.log
-              break
+            LINK=$(grep -o '[a-zA-Z0-9.-]*\.trycloudflare\.com:[0-9]*' cf.log | head -n 1)
+            if [ ! -z "$LINK" ]; then
+              echo "===================================================="
+              echo "✅ LINK BERHASIL DIDAPAT!"
+              echo "ALAMAT RVNC: $LINK"
+              echo "===================================================="
+              # Trik Brutal: Masukkan link ke ringkasan workflow agar langsung kelihatan
+              echo "### ✅ ALAMAT RVNC: \`$LINK\`" >> $GITHUB_STEP_SUMMARY
+              exit 0
             fi
-            echo "Link masih sembunyi ($i/20)..."
+            echo "Percobaan $i: Link belum keluar..."
           done
-          echo "===================================================="
+          echo "❌ Gagal pancing link. Coba jalankan ulang." && exit 1
 
-      - name: 6. 🕒 Jaga Server (6 Jam)
+      - name: 🕒 Jaga Server (6 Jam)
         run: sleep 21600
         
