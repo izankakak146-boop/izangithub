@@ -9,10 +9,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install All Tools
+      - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3
+          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip
+          # Install websockify via pip agar lokasinya pasti terdeteksi
+          pip3 install websockify
 
       - name: Setup Android Container
         run: |
@@ -24,34 +26,33 @@ jobs:
             androidboot.redroid_height=1280 \
             androidboot.redroid_fps=30
 
-      - name: Start Virtual Display & VNC
+      - name: Start Display and VNC
         run: |
           Xvfb :1 -screen 0 720x1280x24 &
           sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
           sleep 5
 
-      - name: Run noVNC Bridge (Python Method)
+      - name: Run Web Bridge (noVNC)
         run: |
-          # Menjalankan websockify agar VNC bisa dibaca via Browser
-          /usr/share/novnc/utils/websockify/websockify.py --web /usr/share/novnc/ 6080 localhost:5900 &
+          # Gunakan websockify untuk menghubungkan VNC ke port 6080
+          python3 -m websockify --web /usr/share/novnc/ 6080 localhost:5900 &
           sleep 10
 
-      - name: Setup Ngrok & Tunnel
+      - name: Setup Ngrok and Tunnel
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt-get update && sudo apt-get install ngrok -y
           
-          # Token Reset Kamu:
           ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
           
-          # Menjalankan Tunnel langsung ke port 6080
-          ngrok http 6080 --log=stdout &
+          # Hubungkan tunnel langsung ke 127.0.0.1:6080
+          ngrok http 127.0.0.1:6080 --log=stdout &
           sleep 20
           
           echo "===================================================="
-          echo "SALIN LINK DI BAWAH INI (TUNGGU 30 DETIK):"
+          echo "LINK MONITOR ANDROID (TUNGGU 30 DETIK):"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
