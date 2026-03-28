@@ -26,13 +26,25 @@ jobs:
             androidboot.redroid_fps=15 \
             androidboot.use_mesa=1
 
-      - name: Launch Visual & Auto-Terminal
+      - name: Launch Visual & Auto-Loop Connect
         run: |
           Xvfb :1 -screen 0 480x854x16 &
           sleep 5
           DISPLAY=:1 fluxbox &
-          # Ini perintah sakti: Membuka terminal otomatis di tengah layar
-          DISPLAY=:1 xterm -geometry 60x20+50+50 -e "echo 'MENGHUBUNGKAN KE ANDROID...'; adb connect localhost:5555; sleep 2; adb -s localhost:5555 wait-for-device; echo 'BERHASIL! MEMANCING LAYAR...'; adb shell input keyevent 3; bash" &
+          
+          # Script otomatis: Terus mencoba sampai tersambung!
+          DISPLAY=:1 xterm -geometry 60x20+50+50 -e "
+          echo 'MEMULAI PENGHUBUNG OTOMATIS...';
+          until adb connect localhost:5555 | grep -q 'connected'; do
+            echo 'Android belum siap, mencoba lagi dalam 5 detik...';
+            sleep 5;
+          done;
+          echo 'BERHASIL TERHUBUNG!';
+          adb -s localhost:5555 wait-for-device;
+          adb shell input keyevent 3;
+          echo 'LAYAR ANDROID SEHARUSNYA MUNCUL SEKARANG.';
+          bash" &
+          
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
           python3 -m websockify --web /usr/share/novnc/ 6080 localhost:5900 &
 
@@ -45,7 +57,7 @@ jobs:
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "LINK BARU (DENGAN AUTO-TERMINAL):"
+          echo "LINK BARU:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
