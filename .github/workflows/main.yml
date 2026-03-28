@@ -26,24 +26,30 @@ jobs:
             androidboot.redroid_fps=15 \
             androidboot.use_mesa=1
 
-      - name: Visual & Auto-Launch Android Screen
+      - name: Visual & Super Auto-Launch
         run: |
           Xvfb :1 -screen 0 480x854x16 &
           sleep 5
           DISPLAY=:1 fluxbox &
           
-          # Script Full Otomatis: Connect -> Force Launch Screen
-          DISPLAY=:1 xterm -geometry 60x20+50+50 -e "
-          echo 'MENCARI KONEKSI ANDROID...';
+          # Terminal 1: Tukang Pantau Koneksi
+          DISPLAY=:1 xterm -geometry 60x10+10+10 -e "
+          echo 'TAHAP 1: MENGHUBUNGKAN ADB...';
           until adb connect localhost:5555 | grep -q 'connected'; do
-            echo 'Menunggu Android siap...';
-            sleep 5;
+            sleep 2;
           done;
-          echo 'BERHASIL TERHUBUNG!';
+          echo 'ADB CONNECTED!';
           adb -s localhost:5555 wait-for-device;
-          echo 'MEMBUKA LAYAR OTOMATIS...';
-          # Mencoba perintah utama, jika gagal pakai perintah kedua
-          scrcpy --force-adb-forward --initial-subscribe-timeout 10000 || DISPLAY=:1 scrcpy;
+          bash" &
+
+          # Terminal 2: Tukang Paksa Buka Layar (Looping)
+          DISPLAY=:1 xterm -geometry 60x10+10+250 -e "
+          echo 'TAHAP 2: MEMAKSA LAYAR MUNCUL...';
+          sleep 10;
+          until DISPLAY=:1 scrcpy --force-adb-forward --initial-subscribe-timeout 10000; do
+            echo 'Gagal memuat layar, mencoba lagi...';
+            sleep 3;
+          done;
           bash" &
           
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
@@ -58,7 +64,7 @@ jobs:
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "LINK BARU (FULL OTOMATIS):"
+          echo "LINK BARU:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
