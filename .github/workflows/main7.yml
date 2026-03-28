@@ -1,4 +1,4 @@
-name: Direct Android Browser
+name: Android Direct VNC
 on: 
   workflow_dispatch:
 
@@ -6,14 +6,12 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Install ws-scrcpy & Tools
+      - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y adb jq
-          # Install penampil android khusus browser
-          sudo npm install -g ws-scrcpy
+          sudo apt-get install -y fluxbox x11vnc xvfb adb scrcpy jq
 
-      - name: Launch Android Container
+      - name: Setup Android 8.1
         run: |
           docker run -d --privileged \
             --name redroid \
@@ -21,29 +19,35 @@ jobs:
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
-            androidboot.redroid_fps=15
+            androidboot.redroid_fps=20
 
-      - name: Connect & Start Bridge
+      - name: Launch VNC Server
         run: |
-          # Tunggu android nyala sebentar
-          sleep 10
+          # Buat layar virtual
+          Xvfb :1 -screen 0 480x854x16 &
+          sleep 2
+          DISPLAY=:1 fluxbox &
+          
+          # Pancing Android agar muncul di layar virtual
           adb connect localhost:5555
           adb wait-for-device
-          # Jalankan server penampil browser di port 8000
-          nohup ws-scrcpy > /dev/null 2>&1 &
-          sleep 5
+          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 20 --bit-rate 2M --always-on-top &
+          
+          # Jalankan server VNC di port 5900
+          x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: Setup Ngrok Direct
+      - name: Setup Ngrok TCP
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt-get update && sudo apt-get install ngrok -y
           ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
-          # Ngrok langsung tembak ke port penampil (8000)
-          ngrok http 8000 --log=stdout &
+          
+          # Gunakan TCP (khusus untuk aplikasi VNC, bukan browser)
+          ngrok tcp 5900 --log=stdout &
           sleep 10
           echo "===================================================="
-          echo "KLIK LINK INI DI BROWSER HP:"
+          echo "ALAMAT UNTUK VNC VIEWER KAMU:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
