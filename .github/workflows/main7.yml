@@ -1,0 +1,76 @@
+name: Android Clean Start
+on: 
+  workflow_dispatch:
+
+jobs:
+  run-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fluxbox x11vnc xvfb novnc jq adb xterm scrcpy
+          # Hapus sisa-sisa adb kalau ada
+          adb kill-server
+
+      - name: Force Clean & Run Docker
+        run: |
+          # Matikan semua docker yang mungkin nyangkut
+          docker rm -f $(docker ps -aq) || true
+          # Jalankan yang baru (Android 8.1 - paling enteng)
+          docker run -d --privileged \
+            --name redroid_new \
+            -p 5555:5555 \
+            redroid/redroid:8.1.0-latest \
+            androidboot.redroid_width=480 \
+            androidboot.redroid_height=854 \
+            androidboot.redroid_fps=15
+
+      - name: Launch Display
+        run: |
+          Xvfb :1 -screen 0 480x854x16 &
+          sleep 2
+          DISPLAY=:1 fluxbox &
+          
+          # Terminal 1: Pancing koneksi tunggal
+          DISPLAY=:1 xterm -geometry 60x10+10+10 -e "
+          echo 'MEMBERSIHKAN KONEKSI...';
+          adb kill-server;
+          adb start-server;
+          until adb connect localhost:5555; do sleep 1; done;
+          # Perintah sakti: cuma pilih device localhost
+          adb -s localhost:5555 wait-for-device;
+          echo 'ANDROID SIAP!';
+          bash" &
+
+          # Terminal 2: Buka layar (Langsung tembak target)
+          DISPLAY=:1 xterm -geometry 60x10+10+250 -e "
+          echo 'MEMBUKA LAYAR...';
+          sleep 15;
+          # Kita paksa scrcpy cuma liat localhost:5555
+          until DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M; do
+            echo 'Mencoba pancing ulang...';
+            adb connect localhost:5555;
+            sleep 5;
+          done;
+          bash" &
+          
+          x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
+          /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080 &
+
+      - name: Setup Ngrok
+        run: |
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt-get update && sudo apt-get install ngrok -y
+          ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
+          ngrok http 6080 --log=stdout &
+          sleep 10
+          curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+
+      - name: Keep Alive
+        run: sleep 21600
+        
