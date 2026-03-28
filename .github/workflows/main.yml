@@ -15,23 +15,39 @@ jobs:
           sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip
           pip3 install websockify
 
-      - name: Setup Android Container (Edisi Ringan)
+      - name: Setup Android Container (Force Start)
         run: |
-          # Menggunakan Redroid 9 agar lebih ringan dan cepat muncul gambarnya
+          # Menggunakan Android 9 yang paling enteng
           docker run -d --privileged \
             --name redroid \
             -p 5555:5555 \
             redroid/redroid:9.0.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
-            androidboot.redroid_fps=15
+            androidboot.redroid_fps=15 \
+            androidboot.use_mesa=1
+          
+          # Tunggu Docker benar-benar stabil
+          sleep 20
 
-      - name: Start Virtual Display
+      - name: Start Virtual Display & Fluxbox
         run: |
+          # Tambahkan Fluxbox supaya ada pengelola jendela (biar gak blank)
           Xvfb :1 -screen 0 480x854x16 &
           sleep 5
+          DISPLAY=:1 fluxbox &
+          sleep 2
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
           sleep 5
+
+      - name: Connect Android to Display
+        run: |
+          # Paksa Android untuk muncul di layar virtual
+          sudo apt-get install adb -y
+          adb connect localhost:5555
+          sleep 5
+          # Perintah sakti untuk memicu layar (simulasi tekan tombol power)
+          adb shell input keyevent 26 
 
       - name: Run Web Bridge
         run: |
@@ -47,7 +63,7 @@ jobs:
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "LINK BARU (TUNGGU 30 DETIK SEBELUM KLIK):"
+          echo "LINK BARU:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
