@@ -12,12 +12,11 @@ jobs:
       - name: Install All Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip
+          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip adb xterm
           pip3 install websockify
 
       - name: Setup Android Container
         run: |
-          # Pakai Android 9 yang paling enteng agar tidak macet
           docker run -d --privileged \
             --name redroid \
             -p 5555:5555 \
@@ -26,19 +25,15 @@ jobs:
             androidboot.redroid_height=854 \
             androidboot.redroid_fps=15 \
             androidboot.use_mesa=1
-          
-          echo "Biarkan Android loading di background..."
 
-      - name: Launch Visual Display
+      - name: Launch Visual & Auto-Terminal
         run: |
-          # Jalankan layar virtual murni
           Xvfb :1 -screen 0 480x854x16 &
           sleep 5
           DISPLAY=:1 fluxbox &
-          # VNC akan langsung memotret layar virtual ini
+          # Ini perintah sakti: Membuka terminal otomatis di tengah layar
+          DISPLAY=:1 xterm -geometry 60x20+50+50 -e "echo 'MENGHUBUNGKAN KE ANDROID...'; adb connect localhost:5555; sleep 2; adb -s localhost:5555 wait-for-device; echo 'BERHASIL! MEMANCING LAYAR...'; adb shell input keyevent 3; bash" &
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
-          sleep 5
-          # Bridge untuk browser kamu
           python3 -m websockify --web /usr/share/novnc/ 6080 localhost:5900 &
 
       - name: Setup Ngrok
@@ -50,7 +45,7 @@ jobs:
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "LINK BARU (COBA BUKA DI ADVAN X1):"
+          echo "LINK BARU (DENGAN AUTO-TERMINAL):"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
