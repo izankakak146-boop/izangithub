@@ -1,4 +1,4 @@
-name: Android VNC Stable
+name: Android VNC Final
 on: 
   workflow_dispatch:
 
@@ -6,42 +6,46 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Install All-in-One
+      - name: Install Tools
         run: |
           sudo apt-get update
           sudo apt-get install -y x11vnc xvfb adb scrcpy jq
           sudo npm install -g localtunnel
 
-      - name: Run Android Container
+      - name: Launch Redroid (Versi Ringan)
         run: |
+          # Pakai versi aml (lebih stabil di beberapa server)
           docker run -d --privileged \
-            --name redroid_final \
+            --name android_serv \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
-            androidboot.redroid_fps=15
+            androidboot.redroid_fps=10 \
+            redroid.gpu.mode=guest
 
-      - name: Force Connection & Launch VNC
+      - name: Force ADB Connection
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 5
-          # Loop sampai bener-bener konek ke localhost:5555
-          echo "MENUNGGU ANDROID ONLINE..."
-          until adb connect localhost:5555; do
-            echo "Gagal konek, coba lagi dalam 2 detik..."
-            sleep 2
+          sleep 10
+          echo "Mencoba paksa koneksi..."
+          # Matikan dan nyalakan lagi server ADB-nya
+          adb kill-server
+          adb start-server
+          
+          # Coba konek maksimal 10 kali
+          for i in {1..10}; do
+            adb connect localhost:5555 && break || sleep 5
           done
-          adb -s localhost:5555 wait-for-device
-          echo "ANDROID SIAP! MEMBUKA LAYAR..."
-          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M --always-on-top &
-          sleep 3
+          
+          adb wait-for-device
+          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 10 --bit-rate 1M --always-on-top &
+          sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: Launch Tunnel
+      - name: Open Tunnel
         run: |
           echo "===================================================="
-          echo "LINK BERIKUT UNTUK ALAMAT DI RVNC VIEWER:"
-          # Pakai Localtunnel biar gak perlu kartu kredit
+          echo "MASUKKAN LINK INI KE RVNC VIEWER:"
           lt --port 5900
           
