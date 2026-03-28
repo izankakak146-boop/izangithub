@@ -1,4 +1,4 @@
-name: Android Direct VNC
+name: Android Clean VNC
 on: 
   workflow_dispatch:
 
@@ -6,34 +6,35 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Tools
+      - name: Kill Ghost Devices
         run: |
           sudo apt-get update
-          sudo apt-get install -y fluxbox x11vnc xvfb adb scrcpy jq
+          sudo apt-get install -y x11vnc xvfb adb scrcpy jq
+          # Matikan semua adb dan docker yang mungkin nyangkut dari run sebelumnya
+          adb kill-server || true
+          docker rm -f $(docker ps -aq) || true
 
       - name: Setup Android 8.1
         run: |
+          # Kita kasih nama spesifik biar gak tertukar
           docker run -d --privileged \
-            --name redroid \
+            --name android_utama \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
-            androidboot.redroid_fps=20
+            androidboot.redroid_fps=15
 
-      - name: Launch VNC Server
+      - name: Launch VNC (Force One Device)
         run: |
-          # Buat layar virtual
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 2
-          DISPLAY=:1 fluxbox &
-          
-          # Pancing Android agar muncul di layar virtual
+          sleep 5
+          # Paksa konek hanya ke satu port
           adb connect localhost:5555
-          adb wait-for-device
-          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 20 --bit-rate 2M --always-on-top &
-          
-          # Jalankan server VNC di port 5900
+          adb -s localhost:5555 wait-for-device
+          # Paksa scrcpy hanya melihat satu device spesifik
+          DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M --always-on-top &
+          sleep 2
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
       - name: Setup Ngrok TCP
@@ -42,12 +43,10 @@ jobs:
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt-get update && sudo apt-get install ngrok -y
           ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
-          
-          # Gunakan TCP (khusus untuk aplikasi VNC, bukan browser)
           ngrok tcp 5900 --log=stdout &
           sleep 10
           echo "===================================================="
-          echo "ALAMAT UNTUK VNC VIEWER KAMU:"
+          echo "ALAMAT BARU UNTUK RVNC VIEWER:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
