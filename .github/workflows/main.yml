@@ -1,4 +1,4 @@
-name: Android VNC Simulation
+name: Android Ultra Light
 on: 
   workflow_dispatch:
 
@@ -6,59 +6,54 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install All Tools
+      - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip adb xterm scrcpy
-          pip3 install websockify
+          sudo apt-get install -y fluxbox x11vnc xvfb novnc jq adb xterm scrcpy
 
-      - name: Setup Android Container
+      - name: Setup Android (Light Version)
         run: |
+          # Menggunakan Android 8.1 (jauh lebih ringan dari versi 9)
           docker run -d --privileged \
             --name redroid \
             -p 5555:5555 \
-            redroid/redroid:9.0.0-latest \
+            redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
-            androidboot.redroid_fps=15 \
-            androidboot.use_mesa=1
+            androidboot.redroid_fps=10
 
-      - name: Visual & Super Auto-Launch
+      - name: Launch System
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 5
+          sleep 2
           DISPLAY=:1 fluxbox &
           
-          # Terminal 1: Tukang Paksa ADB Sampai Online
+          # Terminal Pancingan: Memaksa ADB bangun dari offline
           DISPLAY=:1 xterm -geometry 60x10+10+10 -e "
-          echo 'TAHAP 1: MENUNGGU ANDROID ONLINE...';
-          until adb connect localhost:5555 | grep -q 'connected'; do
-            echo 'Mencoba menyambung...';
-            sleep 2;
-          done;
-          echo 'CONNECTED! MENUNGGU STATE ONLINE...';
-          # Memaksa tunggu sampai statusnya benar-benar 'device' bukan 'offline'
-          adb -s localhost:5555 wait-for-device;
-          echo 'ANDROID SIAP!';
+          echo 'PANCING KONEKSI...';
+          until adb connect localhost:5555; do sleep 1; done;
+          adb wait-for-device;
+          echo 'ANDROID ONLINE!';
+          # Paksa restart server adb di dalam jika masih offline
+          adb shell stop; adb shell start;
           bash" &
 
-          # Terminal 2: Tukang Paksa Layar (Looping Tanpa Ampun)
+          # Terminal Layar: Tanpa opsi aneh-aneh agar tidak error
           DISPLAY=:1 xterm -geometry 60x10+10+250 -e "
-          echo 'TAHAP 2: MEMAKSA LAYAR MUNCUL...';
-          # Kasih waktu nafas lebih lama buat sistem (30 detik)
-          sleep 30;
-          until DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M; do
-            echo 'Android masih loading, mencoba lagi dlm 5 detik...';
+          echo 'MEMBUKA LAYAR...';
+          sleep 10;
+          until DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 10 --bit-rate 1M; do
+            echo 'Gagal, mencoba lagi...';
             adb connect localhost:5555;
             sleep 5;
           done;
           bash" &
           
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
-          python3 -m websockify --web /usr/share/novnc/ 6080 localhost:5900 &
+          /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080 &
 
       - name: Setup Ngrok
         run: |
@@ -67,9 +62,8 @@ jobs:
           sudo apt-get update && sudo apt-get install ngrok -y
           ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
           ngrok http 6080 --log=stdout &
-          sleep 20
+          sleep 10
           echo "===================================================="
-          echo "LINK BARU:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
