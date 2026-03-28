@@ -1,4 +1,4 @@
-name: Android Clean VNC
+name: Android VNC Free LT
 on: 
   workflow_dispatch:
 
@@ -6,50 +6,39 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Kill Ghost Devices
+      - name: Install Tools & LT
         run: |
           sudo apt-get update
           sudo apt-get install -y x11vnc xvfb adb scrcpy jq
-          # Matikan semua adb dan docker yang mungkin nyangkut dari run sebelumnya
-          adb kill-server || true
-          docker rm -f $(docker ps -aq) || true
+          # Install Localtunnel (LT) pengganti Ngrok
+          sudo npm install -g localtunnel
 
       - name: Setup Android 8.1
         run: |
-          # Kita kasih nama spesifik biar gak tertukar
           docker run -d --privileged \
-            --name android_utama \
+            --name redroid_new \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
             androidboot.redroid_height=854 \
             androidboot.redroid_fps=15
 
-      - name: Launch VNC (Force One Device)
+      - name: Launch VNC Server
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 5
-          # Paksa konek hanya ke satu port
-          adb connect localhost:5555
+          sleep 3
+          adb kill-server && adb start-server
+          until adb connect localhost:5555; do sleep 1; done
           adb -s localhost:5555 wait-for-device
-          # Paksa scrcpy hanya melihat satu device spesifik
           DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 15 --bit-rate 2M --always-on-top &
-          sleep 2
+          # Port VNC tetap 5900
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: Setup Ngrok TCP
+      - name: Launch Tunnel
         run: |
-          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt-get update && sudo apt-get install ngrok -y
-          ngrok config add-authtoken 3BZhrzDBuVx4pbuzHO2DYa2J0Id_9nDuXkN5mLdKDFsvUZRz
-          ngrok tcp 5900 --log=stdout &
-          sleep 10
           echo "===================================================="
-          echo "ALAMAT BARU UNTUK RVNC VIEWER:"
-          curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
-          echo "===================================================="
-
-      - name: Keep Alive
-        run: sleep 21600
-        
+          echo "TUNGGU LINK DI BAWAH INI MUNCUL"
+          echo "DIPERLUKAN UNTUK VNC VIEWER:"
+          # Tembak port 5900 ke publik pakai Localtunnel
+          lt --port 5900
+          
