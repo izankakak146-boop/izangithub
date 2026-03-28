@@ -1,4 +1,4 @@
-name: Android 6H Smooth Performance
+name: Android 6H Anti-Ngeframe
 on: 
   workflow_dispatch:
 
@@ -12,15 +12,14 @@ jobs:
           sudo apt-get install -y x11vnc xvfb adb scrcpy jq
           sudo npm install -g localtunnel
 
-      - name: 🧹 SAPU BERSIH HANTU EMULATOR
+      - name: 🧹 SAPU BERSIH TOTAL
         run: |
-          # Hapus sisa-sisa run sebelumnya biar gak bentrok
+          # Hapus semua sisa biar gak ada error 'more than one device'
           docker rm -f $(docker ps -aq) || true
           adb kill-server || true
 
-      - name: Launch Android (CPU Tanpa Batas)
+      - name: Launch Android (Full Power)
         run: |
-          # Kita lepas limit CPU-nya biar gak ngeframe
           docker run -d --privileged \
             --name android_lancar \
             -p 5555:5555 \
@@ -30,20 +29,27 @@ jobs:
             androidboot.redroid_fps=30 \
             redroid.gpu.mode=guest
 
-      - name: Force Connection (High Priority)
+      - name: 🚀 PEMANASAN MESIN & KONEKSI
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 15
+          echo "Menunggu Android bangun (45 detik)..."
+          # Kita kasih waktu lebih lama biar gak failed connect lagi
+          sleep 45
           adb start-server
           
-          # Coba konek paksa ke port 5555
-          until adb connect localhost:5555; do
-            echo "Masih usaha konek..."
-            sleep 2
+          echo "Mencoba paksa koneksi ke localhost:5555..."
+          # Loop 30 kali (sekitar 2-3 menit) sampai bener-bener nyambung
+          for i in {1..30}; do
+            if adb connect localhost:5555; then
+              echo "✅ AKHIRNYA KONEK!"
+              break
+            fi
+            echo "Gagal ke-$i, coba lagi..."
+            sleep 5
           done
           
           adb -s localhost:5555 wait-for-device
-          # Naikin FPS ke 30 biar smooth
+          # FPS 30 biar lancar jaya di Advan X1 kamu
           DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 30 --bit-rate 4M --always-on-top &
           sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
@@ -51,7 +57,7 @@ jobs:
       - name: Buka Jalur Localtunnel
         run: |
           echo "===================================================="
-          echo "PASSWORD IP (CEK DULU SEBELUM BUKA VNC):"
+          echo "PASSWORD IP (CEK DULU):"
           curl -s https://loca.lt/mytunnelpassword
           echo -e "\n===================================================="
           nohup lt --port 5900 > lt.log 2>&1 &
