@@ -12,7 +12,7 @@ jobs:
       - name: Install All Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip adb xterm
+          sudo apt-get install -y qemu-kvm fluxbox x11vnc xvfb novnc jq python3-pip adb xterm scrcpy
           pip3 install websockify
 
       - name: Setup Android Container
@@ -26,23 +26,24 @@ jobs:
             androidboot.redroid_fps=15 \
             androidboot.use_mesa=1
 
-      - name: Launch Visual & Auto-Loop Connect
+      - name: Visual & Auto-Launch Android Screen
         run: |
           Xvfb :1 -screen 0 480x854x16 &
           sleep 5
           DISPLAY=:1 fluxbox &
           
-          # Script otomatis: Terus mencoba sampai tersambung!
+          # Script Full Otomatis: Connect -> Force Launch Screen
           DISPLAY=:1 xterm -geometry 60x20+50+50 -e "
-          echo 'MEMULAI PENGHUBUNG OTOMATIS...';
+          echo 'MENCARI KONEKSI ANDROID...';
           until adb connect localhost:5555 | grep -q 'connected'; do
-            echo 'Android belum siap, mencoba lagi dalam 5 detik...';
+            echo 'Menunggu Android siap...';
             sleep 5;
           done;
           echo 'BERHASIL TERHUBUNG!';
           adb -s localhost:5555 wait-for-device;
-          adb shell input keyevent 3;
-          echo 'LAYAR ANDROID SEHARUSNYA MUNCUL SEKARANG.';
+          echo 'MEMBUKA LAYAR OTOMATIS...';
+          # Mencoba perintah utama, jika gagal pakai perintah kedua
+          scrcpy --force-adb-forward --initial-subscribe-timeout 10000 || DISPLAY=:1 scrcpy;
           bash" &
           
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
@@ -57,7 +58,7 @@ jobs:
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "LINK BARU:"
+          echo "LINK BARU (FULL OTOMATIS):"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
