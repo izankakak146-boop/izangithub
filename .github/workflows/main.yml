@@ -31,22 +31,21 @@ jobs:
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900 &
           /usr/share/novnc/utils/launch.sh --vnc localhost:5900 --listen 6080 &
 
-      - name: Install Ngrok
+      - name: Setup Ngrok and Tunnel
         run: |
+          # Install Ngrok
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt-get update
-          sudo apt-get install ngrok -y
-
-      - name: Configure Ngrok Token
-        run:  3B3DQ6lO2q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h
-
-      - name: Start Ngrok Tunnel
-        run: |
+          sudo apt-get update && sudo apt-get install ngrok -y
+          
+          # PERINTAH WAJIB (JANGAN DIHAPUS):
+          ngrok config add-authtoken "3B3DQ6l02q6Wj0Nf6sLXu2q1Iaz_3vsC3sLSY29SgvsF6tC6h"
+          
+          # Jalankan Tunnel
           ngrok http 6080 --log=stdout &
           sleep 15
           echo "===================================================="
-          echo "SALIN LINK DI BAWAH INI DAN BUKA DI BROWSER HP:"
+          echo "SALIN LINK DI BAWAH INI:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
