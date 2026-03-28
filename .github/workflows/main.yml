@@ -28,22 +28,24 @@ jobs:
 
       - name: Fix Connection & Wait
         run: |
-          echo "Membersihkan sisa koneksi..."
+          echo "Membersihkan jalur koneksi..."
           adb kill-server
           adb start-server
+          adb disconnect localhost:5555
           
-          echo "Menghubungkan ke Android..."
-          # Paksa satu jalur koneksi saja
-          until adb connect localhost:5555; do
-            echo "Mencoba menyambung..."
-            sleep 5
+          echo "Mencoba menyambung paksa..."
+          # Gunakan loop yang lebih cepat
+          for i in {1..20}; do
+            if adb connect localhost:5555 | grep -q "connected"; then
+              echo "BERHASIL TERHUBUNG!"
+              break
+            fi
+            echo "Mencoba lagi ($i/20)..."
+            sleep 3
           done
           
-          echo "Menunggu Online..."
-          # Perintah spesifik ke satu target agar tidak 'more than one device'
           adb -s localhost:5555 wait-for-device
-          sleep 15
-          
+          sleep 5
           echo "Membangunkan Layar..."
           adb -s localhost:5555 shell input keyevent 26
           adb -s localhost:5555 shell input keyevent 3
@@ -65,7 +67,7 @@ jobs:
           ngrok http 6080 --log=stdout &
           sleep 20
           echo "===================================================="
-          echo "LINK TERAKHIR (PASTI BISA):"
+          echo "LINK BARU:"
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
           echo "===================================================="
 
