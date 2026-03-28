@@ -1,4 +1,4 @@
-name: Android 6H Full Power No-Nyangkut
+name: Android 6H Cloudflared
 on: 
   workflow_dispatch:
 
@@ -6,22 +6,21 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Install Tool Pendukung
+      - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y x11vnc xvfb adb scrcpy jq
-          sudo npm install -g localtunnel
+          sudo apt-get install -y x11vnc xvfb adb scrcpy
+          # Download Cloudflared (Argo Tunnel)
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
 
-      - name: 2. 🧹 Bersihkan Sisa Emulator (Anti-Bentrok)
+      - name: 🧹 Bersihkan Hantu
         run: |
-          echo "Menghapus sisa-sisa proses sebelumnya..."
           docker rm -f $(docker ps -aq) || true
-          docker network prune -f || true
           adb kill-server || true
 
-      - name: 3. Setup Android (High Performance)
+      - name: Launch Android Full Power
         run: |
-          # Tanpa limit CPU biar gak ngeframe kayak tukang cukur
           docker run -d --privileged \
             --name android_utama \
             -p 5555:5555 \
@@ -31,56 +30,30 @@ jobs:
             androidboot.redroid_fps=30 \
             redroid.gpu.mode=guest
 
-      - name: 4. 🚀 Paksa Koneksi & VNC Server
+      - name: 🚀 Koneksi Paksa & VNC
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          sleep 15
+          sleep 30
           adb start-server
-          
-          echo "Mencoba konek paksa..."
-          # Loop 30 kali biar gak ada kata 'Failed to connect'
-          for i in {1..30}; do
-            if adb connect localhost:5555; then
-              echo "✅ BERHASIL KONEK KE ANDROID!"
-              break
-            fi
-            echo "Gagal konek ke-$i, coba lagi dalam 5 detik..."
-            sleep 5
-          done
-          
-          adb -s localhost:5555 wait-for-device
-          # Seting layar biar smooth 30 FPS
+          # Gebukin koneksi sampai tembus
+          until adb connect localhost:5555; do echo "Nunggu Android..."; sleep 5; done
+          adb wait-for-device
           DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 30 --bit-rate 4M --always-on-top &
           sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: 5. 🌐 Buka Jalur & Paksa Link Muncul
+      - name: 🌐 Buka Jalur Cloudflared (No-Nyangkut)
         run: |
-          echo "===================================================="
-          echo "IP UNTUK PASSWORD (COPY INI):"
-          curl -s https://loca.lt/mytunnelpassword
-          echo -e "\n===================================================="
-          
-          # Gunakan subdomain unik biar gak tabrakan sama orang lain
-          SUBDOMAIN="izan-android-$(date +%s)"
-          nohup lt --port 5900 --subdomain $SUBDOMAIN > lt.log 2>&1 &
-          
-          echo "MENUNGGU LINK LOCALTUNNEL..."
-          # Cek log tiap 5 detik sampai link ketemu
-          for i in {1..12}; do
-            sleep 5
-            if grep -q "https://" lt.log; then
-              echo "✅ LINK SIAP:"
-              cat lt.log | grep -o 'https://[^ ]*'
-              break
-            fi
-            echo "Masih nunggu link muncul ($i/12)..."
-          done
-          echo "===================================================="
+          echo "============================================"
+          echo "MENYIAPKAN LINK CLOUDFLARE..."
+          # Jalankan tunnel tanpa butuh login/token
+          nohup cloudflared tunnel --url tcp://localhost:5900 > cloudflare.log 2>&1 &
+          sleep 10
+          echo "ALAMAT UNTUK RVNC VIEWER:"
+          # Cari link .trycloudflare.com di log
+          grep -o 'tcp://[a-zA-Z0-9.-]*\.trycloudflare\.com:[0-9]*' cloudflare.log || echo "Gagal dapet link, coba cek log manual"
+          echo "============================================"
 
-      - name: 6. 🕒 Standby 6 Jam
-        run: |
-          echo "Sistem online! Silakan buka link di atas via Browser dulu,"
-          echo "lalu masukkan alamatnya ke RVNC Viewer di HP Advan kamu."
-          sleep 21600
-          
+      - name: 🕒 STANDBY 6 JAM
+        run: sleep 21600
+        
