@@ -1,4 +1,4 @@
-name: Android 6H Anti-Ngeframe
+name: Android 6H Full Power No-Nyangkut
 on: 
   workflow_dispatch:
 
@@ -6,22 +6,24 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Tools
+      - name: 1. Install Tool Pendukung
         run: |
           sudo apt-get update
           sudo apt-get install -y x11vnc xvfb adb scrcpy jq
           sudo npm install -g localtunnel
 
-      - name: 🧹 SAPU BERSIH TOTAL
+      - name: 2. 🧹 Bersihkan Sisa Emulator (Anti-Bentrok)
         run: |
-          # Hapus semua sisa biar gak ada error 'more than one device'
+          echo "Menghapus sisa-sisa proses sebelumnya..."
           docker rm -f $(docker ps -aq) || true
+          docker network prune -f || true
           adb kill-server || true
 
-      - name: Launch Android (Full Power)
+      - name: 3. Setup Android (High Performance)
         run: |
+          # Tanpa limit CPU biar gak ngeframe kayak tukang cukur
           docker run -d --privileged \
-            --name android_lancar \
+            --name android_utama \
             -p 5555:5555 \
             redroid/redroid:8.1.0-latest \
             androidboot.redroid_width=480 \
@@ -29,43 +31,56 @@ jobs:
             androidboot.redroid_fps=30 \
             redroid.gpu.mode=guest
 
-      - name: 🚀 PEMANASAN MESIN & KONEKSI
+      - name: 4. 🚀 Paksa Koneksi & VNC Server
         run: |
           Xvfb :1 -screen 0 480x854x16 &
-          echo "Menunggu Android bangun (45 detik)..."
-          # Kita kasih waktu lebih lama biar gak failed connect lagi
-          sleep 45
+          sleep 15
           adb start-server
           
-          echo "Mencoba paksa koneksi ke localhost:5555..."
-          # Loop 30 kali (sekitar 2-3 menit) sampai bener-bener nyambung
+          echo "Mencoba konek paksa..."
+          # Loop 30 kali biar gak ada kata 'Failed to connect'
           for i in {1..30}; do
             if adb connect localhost:5555; then
-              echo "✅ AKHIRNYA KONEK!"
+              echo "✅ BERHASIL KONEK KE ANDROID!"
               break
             fi
-            echo "Gagal ke-$i, coba lagi..."
+            echo "Gagal konek ke-$i, coba lagi dalam 5 detik..."
             sleep 5
           done
           
           adb -s localhost:5555 wait-for-device
-          # FPS 30 biar lancar jaya di Advan X1 kamu
+          # Seting layar biar smooth 30 FPS
           DISPLAY=:1 scrcpy -s localhost:5555 --max-fps 30 --bit-rate 4M --always-on-top &
           sleep 5
           x11vnc -display :1 -nopw -listen localhost -forever -bg -rfbport 5900
 
-      - name: Buka Jalur Localtunnel
+      - name: 5. 🌐 Buka Jalur & Paksa Link Muncul
         run: |
           echo "===================================================="
-          echo "PASSWORD IP (CEK DULU):"
+          echo "IP UNTUK PASSWORD (COPY INI):"
           curl -s https://loca.lt/mytunnelpassword
           echo -e "\n===================================================="
-          nohup lt --port 5900 > lt.log 2>&1 &
-          sleep 10
-          echo "ALAMAT UNTUK RVNC VIEWER:"
-          cat lt.log | grep -o 'https://[^ ]*'
+          
+          # Gunakan subdomain unik biar gak tabrakan sama orang lain
+          SUBDOMAIN="izan-android-$(date +%s)"
+          nohup lt --port 5900 --subdomain $SUBDOMAIN > lt.log 2>&1 &
+          
+          echo "MENUNGGU LINK LOCALTUNNEL..."
+          # Cek log tiap 5 detik sampai link ketemu
+          for i in {1..12}; do
+            sleep 5
+            if grep -q "https://" lt.log; then
+              echo "✅ LINK SIAP:"
+              cat lt.log | grep -o 'https://[^ ]*'
+              break
+            fi
+            echo "Masih nunggu link muncul ($i/12)..."
+          done
           echo "===================================================="
 
-      - name: 🕒 STANDBY 6 JAM
-        run: sleep 21600
-        
+      - name: 6. 🕒 Standby 6 Jam
+        run: |
+          echo "Sistem online! Silakan buka link di atas via Browser dulu,"
+          echo "lalu masukkan alamatnya ke RVNC Viewer di HP Advan kamu."
+          sleep 21600
+          
