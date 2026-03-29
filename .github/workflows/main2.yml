@@ -10,20 +10,31 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Siapkan Lingkungan Linux
+    - name: Ambil File Instalasi CRD
+      run: |
+        # Ambil langsung dari server Google
+        wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+        
+    - name: Instal Desktop & CRD (Jalur Paksa)
       run: |
         sudo apt update
-        # Pasang Desktop ringan (XFCE) dan Chrome Remote Desktop
-        sudo apt install xfce4 xfce4-goodies desktop-base chrome-remote-desktop -y
+        # Instal CRD duluan
+        sudo dpkg --install chrome-remote-desktop_current_amd64.deb || sudo apt install -f -y
+        # Instal Desktop Environment XFCE yang ringan buat Advan X1
+        sudo apt install xfce4 xfce4-goodies desktop-base xscreensaver -y
         
-    - name: Konfigurasi Desktop
+    - name: Konfigurasi Akses Desktop
       run: |
-        # Supaya tampilan XFCE muncul saat login CRD
+        # Setting biar XFCE jadi tampilan utama
         echo "exec startxfce4" > ~/.xsession
         sudo chmod +x ~/.xsession
+        # Buat grup chrome-remote-desktop kalau belum ada
+        sudo groupadd chrome-remote-desktop || true
+        sudo usermod -a -G chrome-remote-desktop $USER
         
-    - name: Jalankan CRD (Gunakan Kode Kamu)
+    - name: Menghidupkan Mesin Ghaib
       run: |
-        # Baris ini bakal jalanin perintah yang kamu dapet dari Google
+        # Menjalankan kode auth yang kamu masukkan di GitHub Actions
+        # Pin standar saya buat: 123456
         ${{ github.event.inputs.auth_code }} --pin=123456
         
