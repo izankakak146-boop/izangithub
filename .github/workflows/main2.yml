@@ -12,29 +12,30 @@ jobs:
     steps:
     - name: Ambil File Instalasi CRD
       run: |
-        # Ambil langsung dari server Google
         wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
         
     - name: Instal Desktop & CRD (Jalur Paksa)
       run: |
         sudo apt update
-        # Instal CRD duluan
         sudo dpkg --install chrome-remote-desktop_current_amd64.deb || sudo apt install -f -y
-        # Instal Desktop Environment XFCE yang ringan buat Advan X1
         sudo apt install xfce4 xfce4-goodies desktop-base xscreensaver -y
         
     - name: Konfigurasi Akses Desktop
       run: |
-        # Setting biar XFCE jadi tampilan utama
         echo "exec startxfce4" > ~/.xsession
         sudo chmod +x ~/.xsession
-        # Buat grup chrome-remote-desktop kalau belum ada
         sudo groupadd chrome-remote-desktop || true
         sudo usermod -a -G chrome-remote-desktop $USER
         
     - name: Menghidupkan Mesin Ghaib
       run: |
-        # Menjalankan kode auth yang kamu masukkan di GitHub Actions
-        # Pin standar saya buat: 123456
-        ${{ github.event.inputs.auth_code }} --pin=123456
+        # Jalankan CRD di background
+        ${{ github.event.inputs.auth_code }} --pin=123456 &
+        sleep 5
+        
+    - name: "MESIN BEGADANG (6 JAM ONLINE)"
+      run: |
+        echo "Server sedang Online... Jangan tutup tab ini di GitHub!"
+        # Loop ini bakal nahan server biar gak mati selama 6 jam (21600 detik)
+        sleep 21600
         
