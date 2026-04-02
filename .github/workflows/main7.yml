@@ -5,31 +5,34 @@ jobs:
   run-ghost:
     runs-on: windows-latest
     steps:
-      - name: Setup Chrome Remote Desktop
+      - name: 1. Setup & Install CRD
         shell: powershell
         run: |
-          # 1. Download CRD Host
-          $msiPath = "$env:TEMP\chromeremotedesktophost.msi"
+          $msiPath = "$env:TEMP\crd.msi"
           Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile $msiPath
-          
-          # 2. Install secara diam-diam (Silent)
-          Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn"
+          Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn /norestart"
           Write-Host "CRD Berhasil Terinstal!"
 
-          # 3. Masukkan Kode Auth dari Google + PIN
-          # GANTI <KODE_ANDA> dengan kode panjang yang diawali --code="4/..."
-          # Pastikan tambahkan --pin=123456 (atau angka lain 6 digit)
-          
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E95LqhUTkL3fuLPUbw_RPMuchzPyZSd0rA068hQj7b5fLin6_jsqSpYly5sFfj1gA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=123456
+      - name: 2. Jalankan Host dengan Auto-PIN
+        shell: powershell
+        run: |
+          # --- TEMPAT PASTE KODE ---
+          $GoogleCode = & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E90ePp2IEUxJWNv4G_XgQcxzxCftfTglzSZlRSPsbvHoLUyFgBVhrqGIS5elvW3jA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          # -------------------------
 
-      - name: Buat Pasukan Hantu
+          # Saya yang urus penambahan PIN-nya di sini!
+          $FinalCommand = $GoogleCode + ' --pin=123456'
+          Invoke-Expression $FinalCommand
+          Write-Host "Host Berhasil Dijalankan dengan PIN: 123456"
+
+      - name: 3. Buat Senjata Hantu
         shell: powershell
         run: |
           $vbsPath = "$env:USERPROFILE\Desktop\hantu.vbs"
-          'x = MsgBox("HANTU WINDOWS DATANG!", 16, "SISTEM ERROR")' | Out-File -FilePath $vbsPath -Encoding ascii
+          'x = MsgBox("HANTU WINDOWS BERAKSI!", 16, "SISTEM ERROR")' | Out-File -FilePath $vbsPath -Encoding ascii
           Write-Host "File VBS sudah siap di Desktop!"
 
-      - name: Menunggu Koneksi (6 Jam)
+      - name: 4. Menunggu Koneksi (6 Jam)
         shell: powershell
         run: Start-Sleep -Seconds 21600
         
