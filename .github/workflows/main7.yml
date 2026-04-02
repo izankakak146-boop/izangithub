@@ -1,35 +1,32 @@
-name: Windows Ghost Fix
-on: [push, workflow_dispatch]
+name: Windows Ghost Ninja
+on: 
+  workflow_dispatch:
+    inputs:
+      auth_code:
+        description: 'Tempel Kode PowerShell dari Google di Sini'
+        required: true
 
 jobs:
   run-ghost:
     runs-on: windows-latest
     steps:
-      - name: 1. Pre-Install CRD (Biar Gak Telat)
+      - name: 1. Instalasi CRD (Biarkan Selesai Dulu)
         shell: powershell
         run: |
           $msiPath = "$env:TEMP\crd.msi"
-          # Download lebih cepat pakai urutan ini
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile $msiPath
-          # Install tanpa nunggu restart atau pencarian update
           Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn /norestart"
-          Write-Host "CRD Berhasil Terinstal! Sekarang cepat paste kodenya!"
+          Write-Host "CRD Berhasil Terinstal!"
 
-      - name: 2. Jalankan Host
+      - name: 2. Eksekusi Kode Google (Gak Pake Lama)
         shell: powershell
         run: |
-          # PASTE KODE BARU DI ANTARA TANDA KUTIP
-          $GoogleCode = 'PASTE_KODE_DISINI'
-          
-          if ($GoogleCode -ne 'PASTE_KODE_DISINI') {
-              $FinalCommand = $GoogleCode + ' --pin=123456'
-              Invoke-Expression $FinalCommand
-          } else {
-              Write-Error "Kamu belum masukin kodenya woy!"
-          }
+          $GoogleCode = "${{ github.event.inputs.auth_code }}"
+          $FinalCommand = $GoogleCode + ' --pin=123456'
+          Invoke-Expression $FinalCommand
+          Write-Host "Host Berhasil Dijalankan! PIN: 123456"
 
-      - name: 3. Pasukan Hantu & Sleep
+      - name: 3. Pasukan Hantu
         shell: powershell
         run: |
           'x = MsgBox("HANTU WINDOWS BERAKSI!", 16, "SISTEM ERROR")' | Out-File -FilePath "$env:USERPROFILE\Desktop\hantu.vbs" -Encoding ascii
