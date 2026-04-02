@@ -10,25 +10,29 @@ jobs:
   run-ghost:
     runs-on: windows-latest
     steps:
-      - name: 1. Instalasi CRD (Biarkan Selesai Dulu)
+      - name: 1. Instalasi CRD Kilat
         shell: powershell
         run: |
-          $msiPath = "$env:TEMP\crd.msi"
-          Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile $msiPath
-          Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn /norestart"
+          # Pakai choco biar gak download manual, jauh lebih stabil
+          choco install google-chrome-remote-desktop -y
           Write-Host "CRD Berhasil Terinstal!"
 
-      - name: 2. Eksekusi Kode Google (Gak Pake Lama)
+      - name: 2. Eksekusi Kode Google
         shell: powershell
         run: |
-          $GoogleCode = "${{ github.event.inputs.auth_code }}"
-          $FinalCommand = $GoogleCode + ' --pin=123456'
+          # Kita pakai @' '@ (Here-String) biar tanda kutip di kode Google gak bikin error
+          $GoogleCode = @'
+          ${{ github.event.inputs.auth_code }}
+          '@
+          
+          $FinalCommand = $GoogleCode.Trim() + ' --pin=123456'
           Invoke-Expression $FinalCommand
           Write-Host "Host Berhasil Dijalankan! PIN: 123456"
 
       - name: 3. Pasukan Hantu
         shell: powershell
         run: |
-          'x = MsgBox("HANTU WINDOWS BERAKSI!", 16, "SISTEM ERROR")' | Out-File -FilePath "$env:USERPROFILE\Desktop\hantu.vbs" -Encoding ascii
+          $vbsPath = "$env:USERPROFILE\Desktop\hantu.vbs"
+          'x = MsgBox("HANTU WINDOWS BERAKSI!", 16, "SISTEM ERROR")' | Out-File -FilePath $vbsPath -Encoding ascii
           Start-Sleep -Seconds 21600
           
