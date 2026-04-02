@@ -10,24 +10,35 @@ jobs:
   run-ghost:
     runs-on: windows-latest
     steps:
-      - name: 1. Instalasi CRD Kilat
+      - name: 1. Instalasi CRD Kilat (Manual Fix)
         shell: powershell
         run: |
-          # Pakai choco biar gak download manual, jauh lebih stabil
-          choco install google-chrome-remote-desktop -y
-          Write-Host "CRD Berhasil Terinstal!"
+          $msiPath = "$env:TEMP\crd.msi"
+          # Download pake TLS 1.2 biar ngebut
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile $msiPath
+          
+          # Install tanpa banyak tanya
+          Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn /norestart /l*v $env:TEMP\msi.log"
+          Write-Host "CRD Terpasang!"
 
       - name: 2. Eksekusi Kode Google
         shell: powershell
         run: |
-          # Kita pakai @' '@ (Here-String) biar tanda kutip di kode Google gak bikin error
+          # Pake @' '@ biar gak bentrok tanda kutipnya
           $GoogleCode = @'
           ${{ github.event.inputs.auth_code }}
           '@
           
-          $FinalCommand = $GoogleCode.Trim() + ' --pin=123456'
-          Invoke-Expression $FinalCommand
-          Write-Host "Host Berhasil Dijalankan! PIN: 123456"
+          # Bersihkan spasi dan tambahkan PIN otomatis
+          $CleanCode = $GoogleCode.Trim()
+          if ($CleanCode -like '*remoting_start_host.exe*') {
+              $FinalCommand = $CleanCode + ' --pin=123456'
+              Invoke-Expression $FinalCommand
+              Write-Host "Host Berhasil Dijalankan! PIN: 123456"
+          } else {
+              Write-Error "Kodenya salah bang, coba ambil yang PowerShell!"
+          }
 
       - name: 3. Pasukan Hantu
         shell: powershell
