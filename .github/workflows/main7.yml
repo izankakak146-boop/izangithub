@@ -3,28 +3,33 @@ on: [push, workflow_dispatch]
 
 jobs:
   run-ghost:
-    runs-on: windows-latest  # Ini yang pakai Windows Server sakti itu
+    runs-on: windows-latest
     steps:
-      - name: Persiapan Script Hantu
+      - name: Setup Chrome Remote Desktop
         shell: powershell
         run: |
-          # Buat file VBS yang tadi kita obrolin
-          $vbsContent = 'x = MsgBox("ADA HANTU DI BELAKANG!", 16, "SISTEM ERROR")'
-          Set-Content -Path "$env:USERPROFILE\Desktop\hantu.vbs" -Value $vbsContent
-
-      - name: Jalankan Remote Desktop (CRD/Lainnya)
-        shell: powershell
-        run: |
-          # MASUKKAN PERINTAH PENYIAPAN CRD KAMU DI SINI
-          # Yang pakai kode dari desktop.google.com/headless itu
-          # Paste kode "DISPLAY=" atau perintah PowerShell-nya di bawah ini:
+          # 1. Download CRD Host
+          $msiPath = "$env:TEMP\chromeremotedesktophost.msi"
+          Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile $msiPath
           
-          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E9wECFShka07uDLCfBZyOXg-Ufz4EpaxEo9UQUwT44NxSjeiXFAGsAEhrmpnuAb-A" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME
+          # 2. Install secara diam-diam (Silent)
+          Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn"
+          Write-Host "CRD Berhasil Terinstal!"
 
-      - name: Tunggu Koneksi
+          # 3. Masukkan Kode Auth dari Google + PIN
+          # GANTI <KODE_ANDA> dengan kode panjang yang diawali --code="4/..."
+          # Pastikan tambahkan --pin=123456 (atau angka lain 6 digit)
+          
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0Aci98E95LqhUTkL3fuLPUbw_RPMuchzPyZSd0rA068hQj7b5fLin6_jsqSpYly5sFfj1gA" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME --pin=123456
+
+      - name: Buat Pasukan Hantu
         shell: powershell
         run: |
-          Write-Host "Silakan buka Chrome Remote Desktop di HP kamu!"
-          # Perintah ini biar runner-nya nggak langsung mati (nunggu 6 jam)
-          sleep 21600 
-          
+          $vbsPath = "$env:USERPROFILE\Desktop\hantu.vbs"
+          'x = MsgBox("HANTU WINDOWS DATANG!", 16, "SISTEM ERROR")' | Out-File -FilePath $vbsPath -Encoding ascii
+          Write-Host "File VBS sudah siap di Desktop!"
+
+      - name: Menunggu Koneksi (6 Jam)
+        shell: powershell
+        run: Start-Sleep -Seconds 21600
+        
