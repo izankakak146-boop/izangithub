@@ -1,0 +1,29 @@
+name: VNC_Server
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Menyiapkan Amunisi
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt-get update && sudo apt-get install ngrok
+          
+      - name: Menyalakan Mesin
+        run: |
+          # Buat disk kosong biar QEMU mau gerak
+          dd if=/dev/zero of=disk.img bs=1M count=512
+          # Jalankan QEMU di background
+          sudo qemu-system-x86_64 -m 2G -drive file=disk.img,format=raw -vnc :0 -vga std &
+          
+      - name: Membuka Terowongan Ngrok
+        env:
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+        run: |
+          ngrok config add-authtoken $NGROK_AUTH_TOKEN
+          ngrok tcp 5900
+          
