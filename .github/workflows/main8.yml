@@ -1,30 +1,26 @@
-name: Android9_Final_AntiConsole_Izan
+name: Android9_Izan_Final_Beneran
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Install Perlengkapan Haji Slamet
+      - name: 1. Amunisi Lengkap
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Android 9 (Sourceforge VVIP)
+      - name: 2. Download ISO Android 9
         run: |
-          # Pakai link yang tadi berhasil kamu download 100%
           wget -O android9.iso "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso"
 
-      - name: 3. Goreng Mesin (RAM 8GB + Auto Graphic Mode)
+      - name: 3. Goreng Mesin (Pakai Perintah -append yang Benar)
         run: |
           qemu-img create -f qcow2 android.qcow2 10G
           
-          # JURUS SAKTI: 
-          # -vga std: Supaya gak stuck di console
-          # nomodeset: Memaksa Android pakai driver grafis standar
-          # xforcevesa: Biar langsung masuk ke tampilan desktop
+          # -append adalah perintah yang benar, bukan -kernel-cmdline
           sudo qemu-system-x86_64 \
             -m 8G \
             -smp 2 \
@@ -34,22 +30,22 @@ jobs:
             -cdrom android9.iso \
             -device usb-ehci,id=usbbus \
             -device usb-tablet,bus=usbbus.0 \
-            -vnc 127.0.0.1:0 \
+            -vnc 0.0.0.0:0 \
             -vga std \
-            -kernel-cmdline "root=/dev/ram0 androidboot.selinux=permissive buildvariant=userdebug nomodeset xforcevesa vga=788" \
             -display none &
 
           sleep 10
-          websockify --web /usr/share/novnc/ 6080 127.0.0.1:5900 &
+          # Websockify dengerin semua IP (0.0.0.0) biar gak mental
+          websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
           
-          echo "✅ Mesin lagi dipaksa masuk mode gambar... Sabar Zan!"
-          sleep 90
+          echo "✅ Mesin lagi proses booting..."
+          sleep 60
 
-      - name: 4. Sajikan Link (Anti-Mental)
+      - name: 4. Sajikan Link VVIP
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, BEBEK SLAMET VVIP FINAL SIAP!"
-          echo "Buka link di bawah, klik CONNECT, dan tunggu bentar."
+          echo "🚀 IZAN, COBA LAGI SEKARANG!"
+          echo "Gak bakal ada error 'Invalid Option' lagi."
           echo "-------------------------------------------------------"
           cloudflared tunnel --url http://127.0.0.1:6080
           
