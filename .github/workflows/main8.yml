@@ -1,35 +1,51 @@
-name: Android_Browser_Final
+name: QEMU_noVNC_Browser
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Install Cloudflared
+      - name: 1. Amunisi Server (QEMU & noVNC)
         run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 novnc websockify
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
-          
-      - name: 2. Jalankan Android (Versi Browser noVNC)
+
+      - name: 2. Download ISO Android Ringan
         run: |
-          # Kita pakai versi yang jalannya di web port 6080
-          # Memory saya kasih 6GB biar ngebut sesuai spek Xeon GitHub yang kamu bilang
-          docker run -d -p 6080:6080 \
-            --memory="6g" \
-            --shm-size="2g" \
-            -e WEB_VNC=true \
-            --name mesin-izan \
-            tyanyulr/docker-android-novnc:latest
+          # Pakai Android-x86 7.1 yang sudah terbukti stabil di QEMU
+          wget -O android.iso https://mirrors.netix.net/android-x86/Release/v7.1/android-x86-7.1-r5.iso
+
+      - name: 3. Nyalakan Mesin & Web Bridge
+        run: |
+          # Buat disk 4GB
+          qemu-img create -f qcow2 android.qcow2 4G
           
-          echo "✅ Menunggu mesin panas... Sabar 30 detik Zan!"
-          sleep 30
+          # Jalankan QEMU di background
+          sudo qemu-system-x86_64 \
+            -m 4G \
+            -smp 2 \
+            -cpu host \
+            -enable-kvm \
+            -drive file=android.qcow2,format=qcow2 \
+            -cdrom android.iso \
+            -vnc :0 \
+            -vga virtio \
+            -device usb-tablet &
+
+          # Jembatan noVNC: Hubungkan port VNC (5900) ke Web (6080)
+          websockify --web /usr/share/novnc/ 6080 localhost:5900 &
           
-      - name: 3. Ambil Link Browser Kamu
+          echo "✅ QEMU & noVNC sudah sinkron!"
+          sleep 10
+
+      - name: 4. Ambil Link Browser (noVNC)
         run: |
           echo "-------------------------------------------------------"
           echo "🚀 IZAN, BUKA LINK INI DI CHROME HP:"
-          echo "Nggak perlu VNC Viewer, langsung klik link di bawah!"
+          echo "Pilih link yang ada .trycloudflare.com"
+          echo "Begitu terbuka, klik tombol 'Connect'!"
           echo "-------------------------------------------------------"
-          # Kita arahkan ke port 6080 buat noVNC
           cloudflared tunnel --url http://localhost:6080
           
