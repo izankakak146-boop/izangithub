@@ -1,4 +1,4 @@
-name: Jurus_Ular_Kobra_noVNC
+name: Kobra_Putih_noVNC
 on: workflow_dispatch
 
 jobs:
@@ -10,25 +10,23 @@ jobs:
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Panggil Ular (Android 7.1 noVNC)
+      - name: 2. Panggil Kobra Putih (Android 7.1 + noVNC Ready)
         run: |
-          # Kita pakai image dari 'accetto' karena ini paling stabil buat noVNC
-          # Ram kita hajar 10GB biar kenceng banget!
-          docker run -d -p 6080:6080 \
+          # Kita pakai image 'remoteview' karena dia sudah include noVNC di port 8080
+          # Kita kasih RAM 10GB biar ngebut kayak motor balap
+          docker run -d -p 8080:8080 \
             --memory="10g" \
-            --cpus="4.0" \
-            --name mesin-kobra \
-            accetto/ubuntu-vnc-xfce-g3:latest
+            --name mesin-kobra-putih \
+            remoteview/docker-android-x86-7.1.1
           
-          echo "✅ Ular sedang merayap... Tunggu 20 detik!"
-          sleep 20
+          echo "✅ Kobra Putih sedang pemanasan... Tunggu 40 detik Zan!"
+          sleep 40
           
       - name: 3. Aktifkan Racun (Cloudflare Tunnel)
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, BUKA LINK .trycloudflare.com DI BAWAH INI:"
-          echo "Buka di Chrome HP, langsung muncul layar browser!"
+          echo "🚀 IZAN, COPY LINK .trycloudflare.com DI BAWAH INI:"
           echo "-------------------------------------------------------"
-          # Tunneling ke port 6080 (Web Browser noVNC)
-          cloudflared tunnel --url http://localhost:6080
+          # Kita arahkan tunnel ke port 8080 (port standar image ini)
+          cloudflared tunnel --url http://localhost:8080
           
