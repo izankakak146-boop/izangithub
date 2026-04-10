@@ -1,26 +1,30 @@
-name: Android9_Fix_Final_Izan
+name: Android9_Final_AntiConsole_Izan
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Amunisi Lengkap
+      - name: 1. Install Perlengkapan Haji Slamet
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Android 9
+      - name: 2. Download ISO Android 9 (Sourceforge VVIP)
         run: |
+          # Pakai link yang tadi berhasil kamu download 100%
           wget -O android9.iso "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso"
 
-      - name: 3. Goreng Mesin (Fix USB Bus & VNC)
+      - name: 3. Goreng Mesin (RAM 8GB + Auto Graphic Mode)
         run: |
           qemu-img create -f qcow2 android.qcow2 10G
           
-          # Tambahan: -device usb-ehci untuk memperbaiki error No USB Bus
+          # JURUS SAKTI: 
+          # -vga std: Supaya gak stuck di console
+          # nomodeset: Memaksa Android pakai driver grafis standar
+          # xforcevesa: Biar langsung masuk ke tampilan desktop
           sudo qemu-system-x86_64 \
             -m 8G \
             -smp 2 \
@@ -31,21 +35,21 @@ jobs:
             -device usb-ehci,id=usbbus \
             -device usb-tablet,bus=usbbus.0 \
             -vnc 127.0.0.1:0 \
-            -vga virtio \
+            -vga std \
+            -kernel-cmdline "root=/dev/ram0 androidboot.selinux=permissive buildvariant=userdebug nomodeset xforcevesa vga=788" \
             -display none &
 
-          sleep 15
-          # Pastikan websockify nembak ke localhost port 5900
+          sleep 10
           websockify --web /usr/share/novnc/ 6080 127.0.0.1:5900 &
           
-          echo "✅ Mesin lagi booting dengan USB Fix..."
+          echo "✅ Mesin lagi dipaksa masuk mode gambar... Sabar Zan!"
           sleep 90
 
-      - name: 4. Sajikan Link VVIP
+      - name: 4. Sajikan Link (Anti-Mental)
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COBA LAGI SEKARANG!"
-          echo "USB Bus sudah diperbaiki, mesin harusnya gak crash."
+          echo "🚀 IZAN, BEBEK SLAMET VVIP FINAL SIAP!"
+          echo "Buka link di bawah, klik CONNECT, dan tunggu bentar."
           echo "-------------------------------------------------------"
           cloudflared tunnel --url http://127.0.0.1:6080
           
