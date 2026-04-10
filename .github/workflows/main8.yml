@@ -1,26 +1,26 @@
-name: Android9_AntiGoblok_VVIP
+name: Android9_Fix_Final_Izan
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Amunisi Lengkap (QEMU, noVNC, Net-Tools)
+      - name: 1. Amunisi Lengkap
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils net-tools
+          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Android 9 (Sourceforge)
+      - name: 2. Download ISO Android 9
         run: |
           wget -O android9.iso "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso"
 
-      - name: 3. Goreng Mesin (RAM 8GB - Paksa Port 5900)
+      - name: 3. Goreng Mesin (Fix USB Bus & VNC)
         run: |
           qemu-img create -f qcow2 android.qcow2 10G
           
-          # Kita pakai IP 0.0.0.0 biar VNC-nya terbuka buat siapa saja
+          # Tambahan: -device usb-ehci untuk memperbaiki error No USB Bus
           sudo qemu-system-x86_64 \
             -m 8G \
             -smp 2 \
@@ -28,27 +28,24 @@ jobs:
             -enable-kvm \
             -drive file=android.qcow2,format=qcow2 \
             -cdrom android9.iso \
-            -vnc 0.0.0.0:0 \
+            -device usb-ehci,id=usbbus \
+            -device usb-tablet,bus=usbbus.0 \
+            -vnc 127.0.0.1:0 \
             -vga virtio \
-            -display none \
-            -device usb-tablet &
+            -display none &
 
-          # Jeda 10 detik, lalu paksa websockify nempel ke semua interface
-          sleep 10
-          websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
+          sleep 15
+          # Pastikan websockify nembak ke localhost port 5900
+          websockify --web /usr/share/novnc/ 6080 127.0.0.1:5900 &
           
-          echo "✅ Mesin lagi booting... Saya kasih 90 DETIK biar stabil banget!"
+          echo "✅ Mesin lagi booting dengan USB Fix..."
           sleep 90
-          
-          # Cek apakah port 6080 sudah hidup
-          netstat -tuln | grep 6080
 
-      - name: 4. Sajikan Link (JANGAN BURU-BURU KLIK)
+      - name: 4. Sajikan Link VVIP
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, INI KESEMPATAN TERAKHIR SI BEBEK!"
-          echo "1. Klik link di bawah"
-          echo "2. Pas muncul noVNC, tunggu 5 detik baru klik CONNECT"
+          echo "🚀 IZAN, COBA LAGI SEKARANG!"
+          echo "USB Bus sudah diperbaiki, mesin harusnya gak crash."
           echo "-------------------------------------------------------"
           cloudflared tunnel --url http://127.0.0.1:6080
           
