@@ -1,55 +1,54 @@
-name: Android9_VVIP_BebekSlamet_Final
+name: Android9_AntiGoblok_VVIP
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Siapkan Alat Tempur (QEMU & noVNC)
+      - name: 1. Amunisi Lengkap (QEMU, noVNC, Net-Tools)
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
+          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils net-tools
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Android 9 (Link Sourceforge VVIP)
+      - name: 2. Download ISO Android 9 (Sourceforge)
         run: |
-          # Link ini sudah terbukti jalan dan kencang di log kamu
           wget -O android9.iso "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso"
 
-      - name: 3. Goreng Mesin (RAM 6GB + Spek Xeon/EPYC)
+      - name: 3. Goreng Mesin (RAM 8GB - Paksa Port 5900)
         run: |
-          # Buat harddisk virtual 10GB
           qemu-img create -f qcow2 android.qcow2 10G
           
-          # Kita nyalakan mesin dengan KVM biar gak lemot
+          # Kita pakai IP 0.0.0.0 biar VNC-nya terbuka buat siapa saja
           sudo qemu-system-x86_64 \
-            -m 6G \
+            -m 8G \
             -smp 2 \
             -cpu host \
             -enable-kvm \
             -drive file=android.qcow2,format=qcow2 \
             -cdrom android9.iso \
-            -vnc :0 \
+            -vnc 0.0.0.0:0 \
             -vga virtio \
             -display none \
             -device usb-tablet &
 
-          # Jembatan noVNC: Kasih jeda 5 detik biar QEMU siap
-          sleep 5
-          websockify --web /usr/share/novnc/ 6080 localhost:5900 &
+          # Jeda 10 detik, lalu paksa websockify nempel ke semua interface
+          sleep 10
+          websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
           
-          echo "✅ Mesin lagi booting di background..."
-          echo "Sabar ya Zan, kita kasih waktu 60 detik biar gak 'Failed to connect'!"
-          sleep 60
+          echo "✅ Mesin lagi booting... Saya kasih 90 DETIK biar stabil banget!"
+          sleep 90
+          
+          # Cek apakah port 6080 sudah hidup
+          netstat -tuln | grep 6080
 
-      - name: 4. Sajikan Link (Buka di Chrome HP)
+      - name: 4. Sajikan Link (JANGAN BURU-BURU KLIK)
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, BEBEK SLAMET VVIP SUDAH MATANG!"
-          echo "1. Klik link .trycloudflare.com di bawah"
-          echo "2. Begitu terbuka, klik tombol CONNECT"
-          echo "3. Pilih 'Live CD - Run Android-x86' di layar biru"
+          echo "🚀 IZAN, INI KESEMPATAN TERAKHIR SI BEBEK!"
+          echo "1. Klik link di bawah"
+          echo "2. Pas muncul noVNC, tunggu 5 detik baru klik CONNECT"
           echo "-------------------------------------------------------"
-          cloudflared tunnel --url http://localhost:6080
+          cloudflared tunnel --url http://127.0.0.1:6080
           
