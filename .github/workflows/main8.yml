@@ -1,36 +1,33 @@
-name: Android_Real_NoVNC_Lengkap
+name: Android_Final_Fix
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Install Cloudflared (Terowongan)
+      - name: 1. Install Cloudflared
         run: |
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
           
-      - name: 2. Jalankan Docker Android 7 (Paling Enteng)
+      - name: 2. Jalankan Docker Android (Versi Fix)
         run: |
-          # Saya pakai Android 7.1.1 biar enteng dan gak stuck sejam lagi
-          # Saya set memory 3.5GB biar maksimal tenaga servernya
+          # Saya pakai versi x86 supaya kencang di prosesor Xeon/EPYC GitHub
           docker run -d -p 6080:6080 \
-            --memory="3.5g" \
+            --memory="4g" \
             --cpus="2.0" \
             -e EMULATOR_DEVICE="Nexus 5" \
             -e WEB_VNC=true \
-            --name android-mesin budtmo/docker-android:emulator_7.1.1
+            --name android-mesin \
+            budtmo/docker-android-x86-7.1.1
           
-          echo "✅ Mesin Android 7 sedang dihidupkan..."
-          # Kita kasih waktu 40 detik buat sistem awal bangun
-          sleep 40
+          echo "✅ Menunggu mesin pemanasan..."
+          sleep 45
           
       - name: 3. Ambil Link noVNC
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COPY LINK .trycloudflare.com DI BAWAH INI:"
-          echo "Buka di Chrome HP, kalau muncul tombol 'Connect', KLIK SAJA!"
+          echo "🚀 IZAN, COPY LINK DI BAWAH INI:"
           echo "-------------------------------------------------------"
-          # Tunneling ke port 6080 (Web VNC)
           cloudflared tunnel --url http://localhost:6080
           
