@@ -1,53 +1,51 @@
-name: Android9_Bebek_Slamet_noVNC
+name: Android9_VVIP_noVNC
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Siapkan Bumbu (QEMU & noVNC)
+      - name: 1. Siapkan Alat Tempur
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Android 9 (Link Anti-Mati)
+      - name: 2. Download ISO Android 9 (Jalur VVIP)
         run: |
-          # Pakai link dari Fosshub/Advanced-x86 yang lebih tahan banting
-          wget -O android9.iso "https://chuangtzu.ftp.acc.umu.se/mirror/osdn.net/android-x86/71931/android-x86_64-9.0-r2.iso"
+          # Link ini langsung nembak ke server sourceforge yang lebih kuat
+          wget -O android9.iso "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso"
 
-      - name: 3. Goreng Mesin (RAM 6GB + QEMU)
+      - name: 3. Goreng Mesin (RAM 6GB + noVNC)
         run: |
-          # Buat disk virtual 10GB biar lega
-          qemu-img create -f qcow2 android_hdd.qcow2 10G
+          qemu-img create -f qcow2 android.qcow2 10G
           
-          # Kita hajar RAM 6GB biar Android 9 bisa nafas lega kayak di pantai
-          # Pakai cpu host biar tenaga Xeon/EPYC kamu keluar semua
+          # Hajar pakai spek tinggi biar kenceng!
           sudo qemu-system-x86_64 \
             -m 6G \
             -smp 2 \
             -cpu host \
             -enable-kvm \
-            -drive file=android_hdd.qcow2,format=qcow2 \
+            -drive file=android.qcow2,format=qcow2 \
             -cdrom android9.iso \
             -vnc :0 \
             -vga virtio \
             -display none \
             -device usb-tablet &
 
-          # Jembatan noVNC: Hubungkan VNC ke Browser (Port 6080)
+          # Jembatan noVNC ke Browser
           websockify --web /usr/share/novnc/ 6080 localhost:5900 &
           
-          echo "✅ Bebek sedang digoreng... Tunggu 30 detik!"
-          sleep 30
+          echo "✅ Sedang memanaskan mesin... Sabar ya Zan!"
+          sleep 35
 
-      - name: 4. Sajikan Link (Cloudflare)
+      - name: 4. Sajikan Link Cloudflare
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, BEBEK SLAMET SIAP DISAJIKAN!"
-          echo "Klik link .trycloudflare.com di bawah ini"
-          echo "Lalu klik tombol 'Connect' biru di browser"
+          echo "🚀 IZAN, BEBEK SLAMET VVIP SIAP!"
+          echo "Buka link .trycloudflare.com di bawah"
+          echo "Kalau sudah terbuka, klik CONNECT"
           echo "-------------------------------------------------------"
           cloudflared tunnel --url http://localhost:6080
           
