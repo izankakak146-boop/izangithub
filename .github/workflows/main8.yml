@@ -1,32 +1,53 @@
-name: Kobra_Putih_noVNC
+name: Android9_Bebek_Slamet_noVNC
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Pasang Taring (Cloudflared)
+      - name: 1. Siapkan Bumbu (QEMU & noVNC)
         run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Panggil Kobra Putih (Android 7.1 + noVNC Ready)
+      - name: 2. Download ISO Android 9 (Link Anti-Mati)
         run: |
-          # Kita pakai image 'remoteview' karena dia sudah include noVNC di port 8080
-          # Kita kasih RAM 10GB biar ngebut kayak motor balap
-          docker run -d -p 8080:8080 \
-            --memory="10g" \
-            --name mesin-kobra-putih \
-            remoteview/docker-android-x86-7.1.1
+          # Pakai link dari Fosshub/Advanced-x86 yang lebih tahan banting
+          wget -O android9.iso "https://chuangtzu.ftp.acc.umu.se/mirror/osdn.net/android-x86/71931/android-x86_64-9.0-r2.iso"
+
+      - name: 3. Goreng Mesin (RAM 6GB + QEMU)
+        run: |
+          # Buat disk virtual 10GB biar lega
+          qemu-img create -f qcow2 android_hdd.qcow2 10G
           
-          echo "✅ Kobra Putih sedang pemanasan... Tunggu 40 detik Zan!"
-          sleep 40
+          # Kita hajar RAM 6GB biar Android 9 bisa nafas lega kayak di pantai
+          # Pakai cpu host biar tenaga Xeon/EPYC kamu keluar semua
+          sudo qemu-system-x86_64 \
+            -m 6G \
+            -smp 2 \
+            -cpu host \
+            -enable-kvm \
+            -drive file=android_hdd.qcow2,format=qcow2 \
+            -cdrom android9.iso \
+            -vnc :0 \
+            -vga virtio \
+            -display none \
+            -device usb-tablet &
+
+          # Jembatan noVNC: Hubungkan VNC ke Browser (Port 6080)
+          websockify --web /usr/share/novnc/ 6080 localhost:5900 &
           
-      - name: 3. Aktifkan Racun (Cloudflare Tunnel)
+          echo "✅ Bebek sedang digoreng... Tunggu 30 detik!"
+          sleep 30
+
+      - name: 4. Sajikan Link (Cloudflare)
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COPY LINK .trycloudflare.com DI BAWAH INI:"
+          echo "🚀 IZAN, BEBEK SLAMET SIAP DISAJIKAN!"
+          echo "Klik link .trycloudflare.com di bawah ini"
+          echo "Lalu klik tombol 'Connect' biru di browser"
           echo "-------------------------------------------------------"
-          # Kita arahkan tunnel ke port 8080 (port standar image ini)
-          cloudflared tunnel --url http://localhost:8080
+          cloudflared tunnel --url http://localhost:6080
           
