@@ -1,38 +1,30 @@
-name: VNC_Cloudflare_Lengkap
+name: Android_Real_noVNC
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Install Alat Tempur
+      - name: 1. Install Alat Terowongan (Cloudflared)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-system-x86
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
           
-      - name: 2. Nyalakan Mesin (Anti-Gagal)
+      - name: 2. Tarik Android Real (Docker + noVNC)
         run: |
-          # Buat disk dummy 1GB
-          dd if=/dev/zero of=disk.img bs=1M count=1024
-          # Jalankan QEMU dengan display none biar gak error config client.conf
-          sudo qemu-system-x86_64 \
-            -m 2G \
-            -drive file=disk.img,format=raw \
-            -vnc :0 \
-            -vga std \
-            -display none \
-            -daemonize
-          echo "✅ Mesin Berhasil Dinyalakan di Background!"
-          sleep 5
+          # Kita panggil Docker Android versi 9.0. Otomatis anti-ribet dan tanpa QEMU mentahan!
+          docker run -d -p 6080:6080 -e EMULATOR_DEVICE="Nexus 5" -e WEB_VNC=true --name android-mesin budtmo/docker-android:emulator_9.0
           
-      - name: 3. Buka Terowongan & Siapkan Link
+          echo "✅ Mesin Android sedang dipanaskan di background..."
+          # Kasih waktu sebentar biar server web noVNC-nya siap
+          sleep 20
+          
+      - name: 3. Buka Link noVNC ke Browser Kamu
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COPY LINK DI BAWAH INI KE VNC VIEWER:"
-          echo "⚠️  HAPUS 'https://' NYA SAAT MASUKKAN KE APLIKASI!"
+          echo "🚀 IZAN, COPY LINK DI BAWAH INI LANGSUNG KE BROWSER HP (CHROME):"
+          echo "⚠️ Nggak perlu VNC Viewer lagi! Cari link yang ada .trycloudflare.com"
           echo "-------------------------------------------------------"
-          # Jalankan tunnel
-          cloudflared tunnel --url tcp://localhost:5900
+          # Kita arahkan terowongannya langsung ke port web (6080)
+          cloudflared tunnel --url http://localhost:6080
           
