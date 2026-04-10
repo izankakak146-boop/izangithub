@@ -1,4 +1,4 @@
-name: Android_Final_Fix
+name: Android_Browser_Final
 on: workflow_dispatch
 
 jobs:
@@ -10,24 +10,26 @@ jobs:
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
           
-      - name: 2. Jalankan Docker Android (Versi Fix)
+      - name: 2. Jalankan Android (Versi Browser noVNC)
         run: |
-          # Saya pakai versi x86 supaya kencang di prosesor Xeon/EPYC GitHub
+          # Kita pakai versi yang jalannya di web port 6080
+          # Memory saya kasih 6GB biar ngebut sesuai spek Xeon GitHub yang kamu bilang
           docker run -d -p 6080:6080 \
-            --memory="4g" \
-            --cpus="2.0" \
-            -e EMULATOR_DEVICE="Nexus 5" \
+            --memory="6g" \
+            --shm-size="2g" \
             -e WEB_VNC=true \
-            --name android-mesin \
-            budtmo/docker-android-x86-7.1.1
+            --name mesin-izan \
+            tyanyulr/docker-android-novnc:latest
           
-          echo "✅ Menunggu mesin pemanasan..."
-          sleep 45
+          echo "✅ Menunggu mesin panas... Sabar 30 detik Zan!"
+          sleep 30
           
-      - name: 3. Ambil Link noVNC
+      - name: 3. Ambil Link Browser Kamu
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COPY LINK DI BAWAH INI:"
+          echo "🚀 IZAN, BUKA LINK INI DI CHROME HP:"
+          echo "Nggak perlu VNC Viewer, langsung klik link di bawah!"
           echo "-------------------------------------------------------"
+          # Kita arahkan ke port 6080 buat noVNC
           cloudflared tunnel --url http://localhost:6080
           
