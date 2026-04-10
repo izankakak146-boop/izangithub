@@ -1,27 +1,28 @@
-name: Android9_VVIP_noVNC
+name: Android9_VVIP_BebekSlamet_Final
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Siapkan Alat Tempur
+      - name: 1. Siapkan Alat Tempur (QEMU & noVNC)
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Android 9 (Jalur VVIP)
+      - name: 2. Download ISO Android 9 (Link Sourceforge VVIP)
         run: |
-          # Link ini langsung nembak ke server sourceforge yang lebih kuat
+          # Link ini sudah terbukti jalan dan kencang di log kamu
           wget -O android9.iso "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso"
 
-      - name: 3. Goreng Mesin (RAM 6GB + noVNC)
+      - name: 3. Goreng Mesin (RAM 6GB + Spek Xeon/EPYC)
         run: |
+          # Buat harddisk virtual 10GB
           qemu-img create -f qcow2 android.qcow2 10G
           
-          # Hajar pakai spek tinggi biar kenceng!
+          # Kita nyalakan mesin dengan KVM biar gak lemot
           sudo qemu-system-x86_64 \
             -m 6G \
             -smp 2 \
@@ -34,18 +35,21 @@ jobs:
             -display none \
             -device usb-tablet &
 
-          # Jembatan noVNC ke Browser
+          # Jembatan noVNC: Kasih jeda 5 detik biar QEMU siap
+          sleep 5
           websockify --web /usr/share/novnc/ 6080 localhost:5900 &
           
-          echo "✅ Sedang memanaskan mesin... Sabar ya Zan!"
-          sleep 35
+          echo "✅ Mesin lagi booting di background..."
+          echo "Sabar ya Zan, kita kasih waktu 60 detik biar gak 'Failed to connect'!"
+          sleep 60
 
-      - name: 4. Sajikan Link Cloudflare
+      - name: 4. Sajikan Link (Buka di Chrome HP)
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, BEBEK SLAMET VVIP SIAP!"
-          echo "Buka link .trycloudflare.com di bawah"
-          echo "Kalau sudah terbuka, klik CONNECT"
+          echo "🚀 IZAN, BEBEK SLAMET VVIP SUDAH MATANG!"
+          echo "1. Klik link .trycloudflare.com di bawah"
+          echo "2. Begitu terbuka, klik tombol CONNECT"
+          echo "3. Pilih 'Live CD - Run Android-x86' di layar biru"
           echo "-------------------------------------------------------"
           cloudflared tunnel --url http://localhost:6080
           
