@@ -1,48 +1,50 @@
-name: Windows-Sultan-Zan-Full
+name: Windows-Ghost-Ninja-v2
 on: 
   workflow_dispatch:
     inputs:
       crd_code:
-        description: 'Masukkan perintah lengkap dari CRD Debian Linux (DISPLAY=...)'
+        description: 'Masukkan perintah Windows (PowerShell) dari CRD'
         required: true
         default: ''
 
 jobs:
-  nyalain-windows:
-    runs-on: ubuntu-latest
+  run-ghost:
+    runs-on: windows-2025 # Pake Windows Server 2025 yang paling baru!
     steps:
-    - name: 📦 Memasang Alat Tempur (Full Force)
+    - name: 1. Instalasi CRD Kilat (Manual Fix)
+      shell: powershell
       run: |
-        sudo apt update
-        # Download manual CRD karena repo Ubuntu sering gak nemu
-        wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
-        sudo dpkg -i chrome-remote-desktop_current_amd64.deb || sudo apt install -y -f
-        # Pasang QEMU buat emulator Windows
-        sudo apt install -y qemu-system-x86 qemu-utils
+        $msiPath = "$env:TEMP\crd.msi"
+        # Download CRD buat Windows
+        Invoke-WebRequest -Uri "https://dl.google.com/dl/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile $msiPath
+        Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn"
         
-    - name: ⏬ Download ISO & Buat Disk Virtual
+    - name: 2. Eksekusi Kode Google
+      shell: powershell
       run: |
-        # Ambil ISO Windows 10 Pro
-        wget -q --show-progress https://archive.org/download/win10pro_202403/win10pro.iso
-        # Buat harddisk virtual 50GB
-        qemu-img create -f qcow2 win10.qcow2 50G
+        # Menjalankan perintah CRD yang kamu masukkan di input
+        ${{ github.event.inputs.crd_code }} --pin=123456 --name=GHOST-SULTAN-ZAN
 
-    - name: 🔐 Mengaktifkan Remote Desktop (CRD)
+    - name: 3. Pasukan Hantu (Install VirtualBox & ISO)
+      shell: powershell
       run: |
-        # Menjalankan perintah yang kamu input pas klik Run Workflow
-        ${{ github.event.inputs.crd_code }} --pin=123456 --name=GITHUB-ZAN-SULTAN
+        # Download VirtualBox Silent Install
+        Invoke-WebRequest -Uri "https://download.virtualbox.org/virtualbox/7.0.14/VirtualBox-7.0.14-161095-Win.exe" -OutFile "$env:TEMP\vbox.exe"
+        Start-Process "$env:TEMP\vbox.exe" -Wait -ArgumentList "--extract --silent"
+        
+        # Download ISO Windows 10 Pro (Ban serep kalo link pertama batuk)
+        Invoke-WebRequest -Uri "https://bit.ly/win10-iso-direct" -OutFile "C:\win10.iso"
+        
+        Write-Host "✅ SEMUA SIAP! Silakan buka CRD kamu sekarang."
+        Write-Host "Buka VirtualBox di dalam Windows Server dan hajar Windows 10 Pro-nya!"
 
-    - name: 🏎️ GASPOL WINDOWS 10 PRO
+    - name: 4. Jaga Lilin (Biar gak mati 6 jam)
+      shell: powershell
       run: |
-        # Menjalankan mesin dengan RAM 7GB dan 2 Core
-        sudo qemu-system-x86_64 \
-          -m 7G \
-          -smp cores=2 \
-          -cpu host \
-          -drive file=win10.qcow2,format=qcow2 \
-          -cdrom win10pro.iso \
-          -vga virtio \
-          -net nic -net user \
-          -device virtio-tablet-pci \
-          -boot d
-          
+        $i = 0
+        while ($i -lt 360) {
+          Write-Host "Ghost Ninja masih aktif... Menit ke-$i"
+          Start-Sleep -Seconds 60
+          $i++
+        }
+        
