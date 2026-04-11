@@ -1,0 +1,53 @@
+name: Windows7_Izan_VVIP
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Siapkan Bumbu (QEMU & Cloudflare)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+
+      - name: 2. Download ISO Windows 7 Lite (Sourceforge)
+        run: |
+          # Download Windows 7 Lite biar gak kelamaan nunggu
+          wget -O win7.iso "https://sourceforge.net/projects/windows-7-lite-iso/files/Win7_Lite.iso/download"
+
+      - name: 3. Goreng Windows (RAM 8GB + AMD EPYC Power)
+        run: |
+          # Buat harddisk virtual 20GB (Windows butuh tempat lebih lega)
+          qemu-img create -f qcow2 windows.qcow2 20G
+          
+          # Kita pakai settingan VGA STD supaya gambar langsung muncul
+          sudo qemu-system-x86_64 \
+            -m 8G \
+            -smp 2 \
+            -cpu host \
+            -enable-kvm \
+            -drive file=windows.qcow2,format=qcow2 \
+            -cdrom win7.iso \
+            -device usb-ehci,id=usbbus \
+            -device usb-tablet,bus=usbbus.0 \
+            -vnc 0.0.0.0:0 \
+            -vga std \
+            -boot d \
+            -display none &
+
+          sleep 10
+          websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
+          
+          echo "✅ Windows 7 lagi dipanasin... Tunggu bentar Zan!"
+          sleep 60
+
+      - name: 4. Sajikan Link Windows 7
+        run: |
+          echo "-------------------------------------------------------"
+          echo "🚀 IZAN, WINDOWS 7 KLASIK SIAP!"
+          echo "Klik Connect, nanti muncul menu install Windows 7."
+          echo "-------------------------------------------------------"
+          cloudflared tunnel --url http://127.0.0.1:6080
+          
