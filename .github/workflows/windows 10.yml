@@ -1,0 +1,44 @@
+name: Windows-Jadul-Nostalgia
+on: 
+  workflow_dispatch: # Biar bisa diklik manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🛠️ Install QEMU & Cloudflare
+      run: |
+        sudo apt update
+        sudo apt install qemu-system-x86 qemu-utils -y
+        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        sudo dpkg -i cloudflared-linux-amd64.deb
+
+    - name: 💾 Download ISO Tiny10
+      run: |
+        wget -q -O tiny10.iso "https://archive.org/download/tiny-10-NTDEV/Tiny10%20B2.iso"
+        qemu-img create -f qcow2 win10.qcow2 20G
+
+    - name: 🚀 Buka Jalur Tunnel & Jalankan QEMU (Mode Diet)
+      run: |
+        # Jalankan Cloudflare Tunnel di background
+        cloudflared tunnel --url tcp://localhost:5900 > tunnel.log 2>&1 &
+        sleep 5
+        
+        # Tampilkan Link VNC kamu
+        echo "===================================================="
+        grep -oE "[a-zA-Z0-9.-]+\.trycloudflare\.com:[0-9]+" tunnel.log || echo "Tunggu bentar, link lagi dimasak..."
+        echo "===================================================="
+        
+        # Jalankan QEMU Spek "Intel Atom" & RAM 4GB
+        # Kita pakai CPU n270 (Intel Atom legendaris jaman Netbook!)
+        sudo qemu-system-x86_64 \
+          -m 4G \
+          -smp 2 \
+          -cpu n270 \
+          -drive file=win10.qcow2,format=qcow2 \
+          -cdrom tiny10.iso \
+          -vnc :0 \
+          -vga std \
+          -boot d \
+          -net nic -net user
+          
