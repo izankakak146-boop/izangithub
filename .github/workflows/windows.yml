@@ -12,16 +12,17 @@ jobs:
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Windows 7 Lite (Link Direct)
+      - name: 2. Download ISO Windows 7 Lite (Link Anti-Gagal)
         run: |
-          # Pakai link direct download biar gak kena 503 Service Unavailable
-          wget -O win7.iso "https://cdn.pixeldrain.com/api/file/QY8A3pCj" || \
-          wget -O win7.iso "https://ia801501.us.archive.org/21/items/win-7-super-lite-edition-x-86/Win7_Super_Lite_Edition_x86.iso"
+          # Pakai link cadangan yang lebih tahan banting
+          wget -O win7.iso "https://bit.ly/win7lite-izan" || \
+          wget -O win7.iso "http://iso.cdn.vov.me/Windows%207%20Lite%20x86.iso"
 
-      - name: 3. Goreng Windows 7 (RAM 8GB + AMD EPYC)
+      - name: 3. Goreng Windows 7 (RAM 8GB + Tetap HOST)
         run: |
           qemu-img create -f qcow2 windows.qcow2 20G
           
+          # Tetap pakai -cpu host biar tenaga AMD EPYC-nya keluar maksimal
           sudo qemu-system-x86_64 \
             -m 8G \
             -smp 2 \
@@ -36,16 +37,16 @@ jobs:
             -boot d \
             -display none &
 
-          sleep 20
+          sleep 25
           websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
           
-          echo "✅ Windows lagi dipanasin... Kalau 503 berarti servernya lagi tidur!"
+          echo "✅ Windows lagi digoreng... Bismillah kali ini gak 404!"
           sleep 60
 
       - name: 4. Sajikan Link Windows 7 VVIP
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COBA JALUR CADANGAN!"
+          echo "🚀 IZAN, CEK LINK BARU INI!"
           echo "-------------------------------------------------------"
           cloudflared tunnel --url http://127.0.0.1:6080
           
