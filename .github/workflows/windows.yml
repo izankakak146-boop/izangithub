@@ -1,28 +1,28 @@
-name: Windows7_Izan_VVIP
+name: Windows7_Izan_Final_Beneran
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Siapkan Bumbu (QEMU & Cloudflare)
+      - name: 1. Amunisi Mekanik (QEMU & Cloudflare)
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: 2. Download ISO Windows 7 Lite (Sourceforge)
+      - name: 2. Download ISO Windows 7 Lite (Link Anti-404)
         run: |
-          # Download Windows 7 Lite biar gak kelamaan nunggu
-          wget -O win7.iso "https://sourceforge.net/projects/windows-7-lite-iso/files/Win7_Lite.iso/download"
+          # Pakai link Archive.org biar gak kena Exit Code 8 lagi
+          wget -O win7.iso "https://archive.org/download/win-7-super-lite-edition-x-86/Win7_Super_Lite_Edition_x86.iso"
 
-      - name: 3. Goreng Windows (RAM 8GB + AMD EPYC Power)
+      - name: 3. Goreng Windows 7 (RAM 8GB + AMD EPYC)
         run: |
-          # Buat harddisk virtual 20GB (Windows butuh tempat lebih lega)
+          # Harddisk 20GB biar Windows-nya lega
           qemu-img create -f qcow2 windows.qcow2 20G
           
-          # Kita pakai settingan VGA STD supaya gambar langsung muncul
+          # Pakai -vga std biar gak stuck di console kayak Android kemarin
           sudo qemu-system-x86_64 \
             -m 8G \
             -smp 2 \
@@ -37,17 +37,17 @@ jobs:
             -boot d \
             -display none &
 
-          sleep 10
+          sleep 15
           websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
           
-          echo "✅ Windows 7 lagi dipanasin... Tunggu bentar Zan!"
+          echo "✅ Windows lagi dipanasin... Siap-siap Zan!"
           sleep 60
 
-      - name: 4. Sajikan Link Windows 7
+      - name: 4. Sajikan Link Windows 7 VVIP
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, WINDOWS 7 KLASIK SIAP!"
-          echo "Klik Connect, nanti muncul menu install Windows 7."
+          echo "🚀 IZAN, WINDOWS 7 KLASIK SUDAH MATANG!"
+          echo "Klik link di bawah, lalu klik CONNECT."
           echo "-------------------------------------------------------"
           cloudflared tunnel --url http://127.0.0.1:6080
           
