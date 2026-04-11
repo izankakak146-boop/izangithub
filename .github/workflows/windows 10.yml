@@ -1,9 +1,9 @@
-name: Windows-Sultan-Zan
+name: Windows-Sultan-Zan-Full
 on: 
   workflow_dispatch:
     inputs:
       crd_code:
-        description: 'Masukkan kode CRD Debian (Mulai dari DISPLAY=...)'
+        description: 'Masukkan perintah lengkap dari CRD Debian Linux (DISPLAY=...)'
         required: true
         default: ''
 
@@ -11,24 +11,38 @@ jobs:
   nyalain-windows:
     runs-on: ubuntu-latest
     steps:
-    - name: 📦 Memasang Alat Tempur (QEMU & CRD)
+    - name: 📦 Memasang Alat Tempur (Full Force)
       run: |
         sudo apt update
-        sudo apt install -y qemu-system-x86 chrome-remote-desktop
+        # Download manual CRD karena repo Ubuntu sering gak nemu
+        wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+        sudo dpkg -i chrome-remote-desktop_current_amd64.deb || sudo apt install -y -f
+        # Pasang QEMU buat emulator Windows
+        sudo apt install -y qemu-system-x86 qemu-utils
         
-    - name: ⏬ Download ISO & Buat Disk
+    - name: ⏬ Download ISO & Buat Disk Virtual
       run: |
-        # Menggunakan wget untuk ambil ISO Windows 10 Pro
-        wget -q https://archive.org/download/win10pro_202403/win10pro.iso
+        # Ambil ISO Windows 10 Pro
+        wget -q --show-progress https://archive.org/download/win10pro_202403/win10pro.iso
+        # Buat harddisk virtual 50GB
         qemu-img create -f qcow2 win10.qcow2 50G
 
-    - name: 🔐 Mengaktifkan CRD dari Input
+    - name: 🔐 Mengaktifkan Remote Desktop (CRD)
       run: |
-        # Mengambil kode yang kamu ketik di kotak input tadi
-        ${{ github.event.inputs.crd_code }} --pin=123456 --name=GITHUB-SULTAN-ZAN
+        # Menjalankan perintah yang kamu input pas klik Run Workflow
+        ${{ github.event.inputs.crd_code }} --pin=123456 --name=GITHUB-ZAN-SULTAN
 
     - name: 🏎️ GASPOL WINDOWS 10 PRO
       run: |
-        # Menjalankan QEMU dengan RAM standar Azure (7GB biar aman)
-        sudo qemu-system-x86_64 -m 7G -smp cores=2 -cpu host -drive file=win10.qcow2,format=qcow2 -cdrom win10pro.iso -vga virtio -net nic -net user -device virtio-tablet-pci -boot d
-        
+        # Menjalankan mesin dengan RAM 7GB dan 2 Core
+        sudo qemu-system-x86_64 \
+          -m 7G \
+          -smp cores=2 \
+          -cpu host \
+          -drive file=win10.qcow2,format=qcow2 \
+          -cdrom win10pro.iso \
+          -vga virtio \
+          -net nic -net user \
+          -device virtio-tablet-pci \
+          -boot d
+          
