@@ -1,44 +1,34 @@
-name: Windows-Jadul-Nostalgia
+name: Windows-Sultan-Zan
 on: 
-  workflow_dispatch: # Biar bisa diklik manual
+  workflow_dispatch:
+    inputs:
+      crd_code:
+        description: 'Masukkan kode CRD Debian (Mulai dari DISPLAY=...)'
+        required: true
+        default: ''
 
 jobs:
-  build:
+  nyalain-windows:
     runs-on: ubuntu-latest
     steps:
-    - name: 🛠️ Install QEMU & Cloudflare
+    - name: 📦 Memasang Alat Tempur (QEMU & CRD)
       run: |
         sudo apt update
-        sudo apt install qemu-system-x86 qemu-utils -y
-        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-        sudo dpkg -i cloudflared-linux-amd64.deb
-
-    - name: 💾 Download ISO Tiny10
-      run: |
-        wget -q -O tiny10.iso "https://archive.org/download/tiny-10-NTDEV/Tiny10%20B2.iso"
-        qemu-img create -f qcow2 win10.qcow2 20G
-
-    - name: 🚀 Buka Jalur Tunnel & Jalankan QEMU (Mode Diet)
-      run: |
-        # Jalankan Cloudflare Tunnel di background
-        cloudflared tunnel --url tcp://localhost:5900 > tunnel.log 2>&1 &
-        sleep 5
+        sudo apt install -y qemu-system-x86 chrome-remote-desktop
         
-        # Tampilkan Link VNC kamu
-        echo "===================================================="
-        grep -oE "[a-zA-Z0-9.-]+\.trycloudflare\.com:[0-9]+" tunnel.log || echo "Tunggu bentar, link lagi dimasak..."
-        echo "===================================================="
+    - name: ⏬ Download ISO & Buat Disk
+      run: |
+        # Menggunakan wget untuk ambil ISO Windows 10 Pro
+        wget -q https://archive.org/download/win10pro_202403/win10pro.iso
+        qemu-img create -f qcow2 win10.qcow2 50G
+
+    - name: 🔐 Mengaktifkan CRD dari Input
+      run: |
+        # Mengambil kode yang kamu ketik di kotak input tadi
+        ${{ github.event.inputs.crd_code }} --pin=123456 --name=GITHUB-SULTAN-ZAN
+
+    - name: 🏎️ GASPOL WINDOWS 10 PRO
+      run: |
+        # Menjalankan QEMU dengan RAM standar Azure (7GB biar aman)
+        sudo qemu-system-x86_64 -m 7G -smp cores=2 -cpu host -drive file=win10.qcow2,format=qcow2 -cdrom win10pro.iso -vga virtio -net nic -net user -device virtio-tablet-pci -boot d
         
-        # Jalankan QEMU Spek "Intel Atom" & RAM 4GB
-        # Kita pakai CPU n270 (Intel Atom legendaris jaman Netbook!)
-        sudo qemu-system-x86_64 \
-          -m 4G \
-          -smp 2 \
-          -cpu n270 \
-          -drive file=win10.qcow2,format=qcow2 \
-          -cdrom tiny10.iso \
-          -vnc :0 \
-          -vga std \
-          -boot d \
-          -net nic -net user
-          
