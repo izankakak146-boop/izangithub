@@ -1,0 +1,43 @@
+name: Get Pairing Code Izan
+on:
+  workflow_dispatch:
+    inputs:
+      nomor_wa:
+        description: 'Masukkan Nomor WA (628xxx)'
+        required: true
+
+jobs:
+  get-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Script and Run
+        run: |
+          # 1. Bikin file index.js otomatis
+          cat <<EOF > index.js
+          const { default: makeWASocket, useMultiFileAuthState, delay } = require('@whiskeysockets/baileys');
+          const pino = require('pino');
+          async function start() {
+              const { state } = await useMultiFileAuthState('session_temp');
+              const sock = makeWASocket({
+                  auth: state,
+                  logger: pino({ level: 'silent' }),
+                  browser: ["Windows", "Chrome", "11.0.0"]
+              });
+              const phoneNumber = "${{ github.event.inputs.nomor_wa }}";
+              await delay(5000); 
+              try {
+                  const code = await sock.requestPairingCode(phoneNumber);
+                  console.log('\n========================================');
+                  console.log('KODE PAIRING WA IZAN: ' + code);
+                  console.log('========================================\n');
+                  process.exit(0);
+              } catch (e) { console.log("Error: " + e.message); process.exit(1); }
+          }
+          start();
+          EOF
+
+          # 2. Install dan Jalankan
+          npm init -y
+          npm install @whiskeysockets/baileys pino
+          node index.js
+          
