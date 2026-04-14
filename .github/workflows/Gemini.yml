@@ -1,4 +1,4 @@
-name: Bot WA Izan Sultan Final
+name: Bot WA Izan Final Reborn
 on:
   workflow_dispatch:
     inputs:
@@ -12,55 +12,50 @@ jobs:
     steps:
       - name: Create Script and Run
         run: |
-          # 1. Bikin file index.js otomatis dengan folder session baru
           cat <<EOF > index.js
-          const { default: makeWASocket, useMultiFileAuthState, delay, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+          const { default: makeWASocket, useMultiFileAuthState, delay, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = require('@whiskeysockets/baileys');
           const pino = require('pino');
 
           async function start() {
-              // Pakai folder 'session_final' biar fresh dan nggak gagal pair
-              const { state, saveCreds } = await useMultiFileAuthState('session_final');
-              const { version } = await fetchLatestBaileysVersion();
+              // Ganti nama folder jadi 'session_reborn' biar fresh total
+              const { state, saveCreds } = await useMultiFileAuthState('session_reborn');
+              const { version, isLatest } = await fetchLatestBaileysVersion();
               
+              console.log("Menggunakan WA Versi: " + version + " (Latest: " + isLatest + ")");
+
               const sock = makeWASocket({
-                  auth: state,
-                  version,
+                  auth: {
+                    creds: state.creds,
+                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })),
+                  },
+                  printQRInTerminal: false,
                   logger: pino({ level: 'silent' }),
-                  // Ganti jadi Chrome Windows biar lebih stabil salaman sama WA
-                  browser: ["Windows", "Chrome", "110.0.5481.178"]
+                  // Pakai identitas Chrome paling standar biar gak dicurigai
+                  browser: ["Ubuntu", "Chrome", "120.0.0.0"]
               });
 
               const phoneNumber = "${{ github.event.inputs.nomor_wa }}";
               sock.ev.on('creds.update', saveCreds);
 
-              console.log("Menghubungkan ke server WA... Versi: " + version);
               await delay(10000); 
 
               try {
-                  console.log("Minta kode baru untuk: " + phoneNumber);
                   const code = await sock.requestPairingCode(phoneNumber);
                   console.log('\n========================================');
-                  console.log('BERHASIL! KODE PAIRING WA IZAN:');
-                  console.log('👉 ' + code + ' 👈');
+                  console.log('KODE PAIRING BARU: ' + code);
                   console.log('========================================\n');
                   
-                  console.log("CEPAT MASUKKAN KODE KE WA KAMU SEKARANG!");
-                  console.log("Bot akan standby selama 6 jam...");
-                  
-                  // Menjaga GitHub tetap melek 6 jam
+                  // Menjaga agar GitHub tetap hidup 6 jam
                   await delay(21600000); 
               } catch (e) { 
-                  console.log("\n❌ GAGAL: " + e.message);
+                  console.log("Error: " + e.message);
                   process.exit(1); 
               }
           }
           start();
           EOF
 
-          # 2. Install library
           npm init -y
           npm install @whiskeysockets/baileys pino
-
-          # 3. Jalankan
           node index.js
           
