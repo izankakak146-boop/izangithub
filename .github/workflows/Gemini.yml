@@ -1,4 +1,4 @@
-name: Get Pairing Code Izan
+name: Bot WA Izan Nonstop
 on:
   workflow_dispatch:
     inputs:
@@ -17,21 +17,32 @@ jobs:
           const { default: makeWASocket, useMultiFileAuthState, delay } = require('@whiskeysockets/baileys');
           const pino = require('pino');
           async function start() {
-              const { state } = await useMultiFileAuthState('session_temp');
+              const { state, saveCreds } = await useMultiFileAuthState('session_temp');
               const sock = makeWASocket({
                   auth: state,
                   logger: pino({ level: 'silent' }),
-                  browser: ["Windows", "Chrome", "11.0.0"]
+                  browser: ["Ubuntu", "Chrome", "20.0.04"]
               });
               const phoneNumber = "${{ github.event.inputs.nomor_wa }}";
-              await delay(5000); 
+              
+              sock.ev.on('creds.update', saveCreds);
+
+              console.log("Menghubungkan ke WA... Tunggu 10 detik...");
+              await delay(10000); // Kasih jeda lebih lama biar gak dikira spam
+
               try {
                   const code = await sock.requestPairingCode(phoneNumber);
                   console.log('\n========================================');
                   console.log('KODE PAIRING WA IZAN: ' + code);
                   console.log('========================================\n');
-                  process.exit(0);
-              } catch (e) { console.log("Error: " + e.message); process.exit(1); }
+                  
+                  // Biar melek terus setelah dapet kode
+                  console.log("Bot akan stand-by selama 6 jam...");
+                  await delay(21600000); // 6 jam dalam milidetik
+              } catch (e) { 
+                  console.log("Error: " + e.message); 
+                  process.exit(1); 
+              }
           }
           start();
           EOF
