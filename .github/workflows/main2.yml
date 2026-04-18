@@ -1,41 +1,43 @@
-name: Linux-CRD-Android-Zan
-on: 
+name: Linux-CRD-Android-Zan-Upgrade
+
+on:
   workflow_dispatch:
     inputs:
-      auth_code:
-        description: 'Masukkan Kode CRD (Debian Linux)'
+      auth_token:
+        description: 'Masukkan Auth Token dari Chrome Remote Desktop'
         required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Ambil File Instalasi CRD
-      run: |
-        wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
-        
-    - name: Instal Desktop & CRD (Jalur Paksa)
-      run: |
-        sudo apt update
-        sudo dpkg --install chrome-remote-desktop_current_amd64.deb || sudo apt install -f -y
-        sudo apt install xfce4 xfce4-goodies desktop-base xscreensaver -y
-        
-    - name: Konfigurasi Akses Desktop
-      run: |
-        echo "exec startxfce4" > ~/.xsession
-        sudo chmod +x ~/.xsession
-        sudo groupadd chrome-remote-desktop || true
-        sudo usermod -a -G chrome-remote-desktop $USER
-        
-    - name: Menghidupkan Mesin Ghaib
-      run: |
-        # Jalankan CRD di background
-        ${{ github.event.inputs.auth_code }} --pin=123456 &
-        sleep 5
-        
-    - name: "MESIN BEGADANG (6 JAM ONLINE)"
-      run: |
-        echo "Server sedang Online... Jangan tutup tab ini di GitHub!"
-        # Loop ini bakal nahan server biar gak mati selama 6 jam (21600 detik)
-        sleep 21600
-        
+      - name: Membersihkan Storage (Biar Gak Sempit)
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Install Ubuntu Desktop & XFCE
+        run: |
+          sudo apt update
+          # Pake --no-install-recommends biar download gak kegedean tapi tetep Ubuntu asli
+          sudo apt install --no-install-recommends ubuntu-desktop xfce4 xfce4-goodies -y
+          
+      - name: Install Google Chrome Remote Desktop (Link Resmi)
+        run: |
+          wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+          sudo dpkg --install chrome-remote-desktop_current_amd64.deb
+          sudo apt install --fix-broken -y
+
+      - name: Jalankan CRD dengan Auth Token
+        run: |
+          # Perintah ini bakal ambil token yang kamu ketik di kotak input tadi
+          ${{ github.event.inputs.auth_token }} --pin=123456
+          
+      - name: Menjaga Runner Tetap Hidup (Anti-Mati)
+        run: |
+          echo "Server Berhasil Jalan! Silakan cek di Chrome Remote Desktop HP kamu."
+          # Loop supaya workflow gak langsung selesai/mati
+          sleep 21600
+          
