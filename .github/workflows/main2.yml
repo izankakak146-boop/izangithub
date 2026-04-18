@@ -1,4 +1,4 @@
-name: Linux-CRD-Android-Zan-Super-Upgrade
+name: Linux-CRD-Zan-Final-Fix
 
 on:
   workflow_dispatch:
@@ -11,37 +11,39 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Membersihkan Storage (Biar RAM 16GB & Disk Lega)
+      - name: Bersihkan Sampah GitHub
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/share/dotnet /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
 
-      - name: Update Repo & Install Ubuntu Desktop XFCE
+      - name: Install XFCE Desktop
         run: |
           sudo apt update
-          sudo apt install --no-install-recommends xfce4 xfce4-goodies ubuntu-desktop -y
+          sudo apt install xfce4 xfce4-goodies-y
 
-      - name: Install Google Chrome Remote Desktop (Anti-404 Version)
+      - name: Install CRD Anti-404
         run: |
-          # Ambil GPG Key Resmi Google
           curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor | sudo tee /usr/share/keyrings/google-chrome.gpg >> /dev/null
-          # Tambah Repo CRD secara otomatis
           echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome-remote-desktop/deb/ stable main" | sudo tee /etc/apt/sources.list.d/chrome-remote-desktop.list
           sudo apt update
           sudo apt install chrome-remote-desktop -y
 
-      - name: Konfigurasi Desktop & Jalankan CRD
+      - name: Fix Config & Jalankan CRD
         run: |
-          # Set XFCE sebagai desktop default biar gak layar hitam
-          sudo bash -c 'echo "exec /etc/X11/Xinit/xinitrc" > /etc/chrome-remote-desktop-session'
-          # Masukin Token dari Input Workflow
+          # Buat folder config secara paksa biar gak 'Failed to read'
+          mkdir -p ~/.config/chrome-remote-desktop
+          sudo chown -R $USER:$USER ~/.config
+          
+          # Set XFCE biar gak layar hitam (Blank Screen Fix)
+          echo "exec startxfce4" > ~/.chrome-remote-desktop-session
+          
+          # Jalankan Token (Ganti PIN jadi 123456)
           ${{ github.event.inputs.auth_token }} --pin=123456
-
-      - name: Menjaga Server Tetap Hidup (Durasi 6 Jam)
+          
+      - name: Jaga Server (Anti-Timeout)
         run: |
-          echo "BERHASIL! Cek aplikasi Chrome Remote Desktop di HP Android kamu."
-          echo "Pastikan pilih Runner yang baru muncul dan masukkan PIN: 123456"
+          echo "Cek CRD di HP kamu, cari nama runner baru!"
+          # Perintah sakti biar gak mati selama 6 jam
+          sudo apt install screen -y
+          screen -d -m python3 -m http.server 9999
           sleep 21600
           
