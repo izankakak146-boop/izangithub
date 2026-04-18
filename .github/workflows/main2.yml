@@ -1,4 +1,4 @@
-name: Linux-CRD-Zan-Final-Fix
+name: Linux-CRD-Zan-Final-Destruction
 
 on:
   workflow_dispatch:
@@ -15,10 +15,10 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
 
-      - name: Install XFCE Desktop
+      - name: Install XFCE Desktop (Tanpa Typo)
         run: |
           sudo apt update
-          sudo apt install xfce4 xfce4-goodies-y
+          sudo apt install xfce4 xfce4-goodies -y
 
       - name: Install CRD Anti-404
         run: |
@@ -29,21 +29,16 @@ jobs:
 
       - name: Fix Config & Jalankan CRD
         run: |
-          # Buat folder config secara paksa biar gak 'Failed to read'
           mkdir -p ~/.config/chrome-remote-desktop
           sudo chown -R $USER:$USER ~/.config
-          
-          # Set XFCE biar gak layar hitam (Blank Screen Fix)
+          # Set XFCE Desktop Session
           echo "exec startxfce4" > ~/.chrome-remote-desktop-session
-          
-          # Jalankan Token (Ganti PIN jadi 123456)
+          # Masukkan Auth Token
           ${{ github.event.inputs.auth_token }} --pin=123456
           
-      - name: Jaga Server (Anti-Timeout)
+      - name: Jaga Server Anti-Mati (6 Jam)
         run: |
-          echo "Cek CRD di HP kamu, cari nama runner baru!"
-          # Perintah sakti biar gak mati selama 6 jam
-          sudo apt install screen -y
-          screen -d -m python3 -m http.server 9999
+          echo "SERVER AKTIF! Cek CRD di Android kamu sekarang."
+          # Loop biar gak mati
           sleep 21600
           
