@@ -1,43 +1,47 @@
-name: Linux-CRD-Android-Zan-Upgrade
+name: Linux-CRD-Android-Zan-Super-Upgrade
 
 on:
   workflow_dispatch:
     inputs:
       auth_token:
-        description: 'Masukkan Auth Token dari Chrome Remote Desktop'
+        description: 'Masukkan Auth Token (Debian Linux) dari Google CRD'
         required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Membersihkan Storage (Biar Gak Sempit)
+      - name: Membersihkan Storage (Biar RAM 16GB & Disk Lega)
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      - name: Install Ubuntu Desktop & XFCE
+      - name: Update Repo & Install Ubuntu Desktop XFCE
         run: |
           sudo apt update
-          # Pake --no-install-recommends biar download gak kegedean tapi tetep Ubuntu asli
-          sudo apt install --no-install-recommends ubuntu-desktop xfce4 xfce4-goodies -y
-          
-      - name: Install Google Chrome Remote Desktop (Link Resmi)
-        run: |
-          wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
-          sudo dpkg --install chrome-remote-desktop_current_amd64.deb
-          sudo apt install --fix-broken -y
+          sudo apt install --no-install-recommends xfce4 xfce4-goodies ubuntu-desktop -y
 
-      - name: Jalankan CRD dengan Auth Token
+      - name: Install Google Chrome Remote Desktop (Anti-404 Version)
         run: |
-          # Perintah ini bakal ambil token yang kamu ketik di kotak input tadi
+          # Ambil GPG Key Resmi Google
+          curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor | sudo tee /usr/share/keyrings/google-chrome.gpg >> /dev/null
+          # Tambah Repo CRD secara otomatis
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome-remote-desktop/deb/ stable main" | sudo tee /etc/apt/sources.list.d/chrome-remote-desktop.list
+          sudo apt update
+          sudo apt install chrome-remote-desktop -y
+
+      - name: Konfigurasi Desktop & Jalankan CRD
+        run: |
+          # Set XFCE sebagai desktop default biar gak layar hitam
+          sudo bash -c 'echo "exec /etc/X11/Xinit/xinitrc" > /etc/chrome-remote-desktop-session'
+          # Masukin Token dari Input Workflow
           ${{ github.event.inputs.auth_token }} --pin=123456
-          
-      - name: Menjaga Runner Tetap Hidup (Anti-Mati)
+
+      - name: Menjaga Server Tetap Hidup (Durasi 6 Jam)
         run: |
-          echo "Server Berhasil Jalan! Silakan cek di Chrome Remote Desktop HP kamu."
-          # Loop supaya workflow gak langsung selesai/mati
+          echo "BERHASIL! Cek aplikasi Chrome Remote Desktop di HP Android kamu."
+          echo "Pastikan pilih Runner yang baru muncul dan masukkan PIN: 123456"
           sleep 21600
           
