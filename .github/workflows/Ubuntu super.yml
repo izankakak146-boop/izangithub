@@ -1,4 +1,4 @@
-name: UBUNTU_VNC_HARDCORE
+name: UBUNTU_VNC_HARDCORE_FIX
 on: 
   workflow_dispatch:
 
@@ -12,23 +12,22 @@ jobs:
         sudo apt-get install qemu-system-x86 qemu-utils psmisc aria2 -y
         curl -fsSL https://tailscale.com/install.sh | sh
 
-    - name: 🔑 Connect Tailscale (Hardcoded Mode)
+    - name: 🔑 Connect Tailscale (Hardcoded)
       run: |
-        # GANTI TULISAN DI BAWAH INI DENGAN AUTH KEY TAILSCALE KAMU
+        # GANTI tskey-auth-xxx DENGAN KEY KAMU SENDIRI!
         sudo tailscale up --authkey=tskey-auth-k6L27xUHRD11CNTRL-RvkmNiNRnS86iUNZXukET83PGCKLEEgG
-        # ^^^ Ganti yang itu ya Zan!
 
-    - name: 🚀 Turbo Download ISO (Mirror Kencang)
+    - name: 🚀 Turbo Download ISO (Link Official Baru)
       run: |
-        # Pakai aria2c 16 jalur biar lari kenceng
-        aria2c -x 16 -s 16 -k 1M -o ubuntu.iso "https://old-releases.ubuntu.com/releases/20.04.6/ubuntu-20.04.6-desktop-amd64.iso"
+        # Pakai link releases resmi (Bukan old-releases) biar gak 404
+        aria2c -x 16 -s 16 -k 1M -o ubuntu.iso "https://releases.ubuntu.com/20.04/ubuntu-20.04.6-desktop-amd64.iso"
         qemu-img create -f qcow2 ubuntu_disk.qcow2 30G
 
     - name: 💻 Eksekusi QEMU (AMD EPYC + VNC Mode)
       run: |
         sudo pkill qemu-system-x86_64 || true
         
-        # Jalankan QEMU (RAM 4GB, 2 Core, CPU Host)
+        # Spek Gahar Request-an kamu
         sudo qemu-system-x86_64 \
           -m 4G \
           -smp 2 \
@@ -42,14 +41,14 @@ jobs:
           -device usb-ehci,id=usb -device usb-tablet,bus=usb.0 &
           
         echo "✅ Ubuntu SIAP!"
-        echo "🌐 IP Tailscale kamu buat di VNC Viewer HP:"
+        echo "🌐 IP Tailscale kamu:"
         tailscale ip -4
 
     - name: 🛡️ Jaga Runner (6 Jam)
       run: |
-        echo "🔥 Langsung buka VNC Viewer, masukkan IP Tailscale di atas!"
+        echo "🔥 CONNECT VIA VNC VIEWER KE IP TAILSCALE DI ATAS!"
         for i in {1..360}; do
-          echo "⏰ Menit ke-$i: Runner AMD EPYC tetap ON..."
+          echo "⏰ Menit ke-$i: Runner tetap hidup..."
           sleep 60
         done
         
