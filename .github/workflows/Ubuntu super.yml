@@ -1,0 +1,59 @@
+name: UBUNTU_GITHUB_EPIC
+on: 
+  workflow_dispatch:
+
+jobs:
+  run_ubuntu_beast:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🛠️ Install Alat Perang
+      run: |
+        sudo apt update
+        sudo apt install qemu-system-x86 qemu-utils novnc python3-websockify fuser -y
+        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        sudo dpkg -i cloudflared-linux-amd64.deb
+
+    - name: 📥 Download Ubuntu 20.04 Desktop
+      run: |
+        # Narik ISO dari link Archive.org yang kamu kasih
+        wget -O ubuntu.iso "https://archive.org/download/ubuntu-20.04-desktop-amd64_202505/ubuntu-20.04-desktop-amd64.iso"
+        qemu-img create -f qcow2 ubuntu_disk.qcow2 30G
+
+    - name: 🚀 Eksekusi Ubuntu (Spek Request)
+      run: |
+        # 1. Jalankan noVNC Bridge
+        websockify --web /usr/share/novnc/ 6080 localhost:5900 &
+        
+        # 2. Jalankan Cloudflare Tunnel
+        cloudflared tunnel --url http://localhost:6080 > cloudflare.log 2>&1 &
+        
+        # 3. Jalankan QEMU (RAM 4GB, 2 Core, CPU Host)
+        # Saya tambahkan "-cpu host" sesuai request biar lari kenceng!
+        sudo qemu-system-x86_64 \
+          -m 4G \
+          -smp 2 \
+          -cpu host \
+          -enable-kvm \
+          -drive file=ubuntu_disk.qcow2,format=qcow2 \
+          -cdrom ubuntu.iso \
+          -vga std \
+          -display vnc=:0 \
+          -net nic -net user \
+          -device usb-ehci,id=usb -device usb-tablet,bus=usb.0 &
+          
+        echo "⏳ Menunggu Link Cloudflare muncul di bawah..."
+        sleep 15
+        # Menampilkan link secara otomatis di log
+        grep -o 'https://.*\.trycloudflare\.com' cloudflare.log || echo "⚠️ Link belum muncul, cek log manual di step ini!"
+
+    - name: 🛡️ Jaga Runner (Durasi 6 Jam)
+      run: |
+        echo "🔥 UBUNTU IS RUNNING ON GITHUB RUNNER!"
+        echo "👉 Cek link Cloudflare di log step sebelumnya."
+        # Loop agar runner tidak mati otomatis
+        for i in {1..360}
+        do
+          echo "⏰ Menit ke-$i: Menjaga koneksi AMD EPYC/Intel Xeon..."
+          sleep 60
+        done
+        
