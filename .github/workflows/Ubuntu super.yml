@@ -1,39 +1,34 @@
-name: UBUNTU_GITHUB_EPIC
+name: UBUNTU_VNC_HARDCORE
 on: 
   workflow_dispatch:
 
 jobs:
-  run_ubuntu_beast:
+  run_ubuntu:
     runs-on: ubuntu-latest
     steps:
-    - name: 🛠️ Install Alat Perang
+    - name: 🛠️ Install Tools & Tailscale
       run: |
         sudo apt-get update
-        # Mengganti fuser dengan psmisc jika diperlukan, tapi pkill sudah cukup
-        sudo apt-get install qemu-system-x86 qemu-utils novnc python3-websockify -y
-        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-        sudo dpkg -i cloudflared-linux-amd64.deb
+        sudo apt-get install qemu-system-x86 qemu-utils psmisc aria2 -y
+        curl -fsSL https://tailscale.com/install.sh | sh
 
-    - name: 📥 Download Ubuntu 20.04 Desktop
+    - name: 🔑 Connect Tailscale (Hardcoded Mode)
       run: |
-        # Narik ISO dari link Archive.org
-        wget -O ubuntu.iso "https://archive.org/download/ubuntu-20.04-desktop-amd64_202505/ubuntu-20.04-desktop-amd64.iso"
+        # GANTI TULISAN DI BAWAH INI DENGAN AUTH KEY TAILSCALE KAMU
+        sudo tailscale up --authkey=tskey-auth-k6L27xUHRD11CNTRL-RvkmNiNRnS86iUNZXukET83PGCKLEEgG
+        # ^^^ Ganti yang itu ya Zan!
+
+    - name: 🚀 Turbo Download ISO (Mirror Kencang)
+      run: |
+        # Pakai aria2c 16 jalur biar lari kenceng
+        aria2c -x 16 -s 16 -k 1M -o ubuntu.iso "https://old-releases.ubuntu.com/releases/20.04.6/ubuntu-20.04.6-desktop-amd64.iso"
         qemu-img create -f qcow2 ubuntu_disk.qcow2 30G
 
-    - name: 🚀 Eksekusi Ubuntu (Spek Request)
+    - name: 💻 Eksekusi QEMU (AMD EPYC + VNC Mode)
       run: |
-        # 1. Pastikan tidak ada proses sisa
         sudo pkill qemu-system-x86_64 || true
-        sudo pkill cloudflared || true
         
-        # 2. Jalankan noVNC Bridge
-        websockify --web /usr/share/novnc/ 6080 localhost:5900 &
-        
-        # 3. Jalankan Cloudflare Tunnel
-        cloudflared tunnel --url http://localhost:6080 > cloudflare.log 2>&1 &
-        
-        # 4. Jalankan QEMU (RAM 4GB, 2 Core, CPU Host)
-        # Menggunakan AMD EPYC / Intel Xeon Power dari GitHub Runner
+        # Jalankan QEMU (RAM 4GB, 2 Core, CPU Host)
         sudo qemu-system-x86_64 \
           -m 4G \
           -smp 2 \
@@ -43,22 +38,18 @@ jobs:
           -cdrom ubuntu.iso \
           -vga std \
           -display vnc=:0 \
-          -net nic -net user \
+          -net nic,model=virtio -net user \
           -device usb-ehci,id=usb -device usb-tablet,bus=usb.0 &
           
-        echo "⏳ Menunggu Link Cloudflare muncul..."
-        sleep 20
-        # Menampilkan link secara otomatis di log
-        grep -o 'https://.*\.trycloudflare\.com' cloudflare.log || echo "⚠️ Link belum muncul, silakan cek manual di file cloudflare.log"
+        echo "✅ Ubuntu SIAP!"
+        echo "🌐 IP Tailscale kamu buat di VNC Viewer HP:"
+        tailscale ip -4
 
-    - name: 🛡️ Jaga Runner (Durasi 6 Jam)
+    - name: 🛡️ Jaga Runner (6 Jam)
       run: |
-        echo "🔥 UBUNTU IS RUNNING ON GITHUB RUNNER!"
-        echo "👉 Link Cloudflare bisa dilihat di log step sebelumnya."
-        # Loop agar runner tidak mati otomatis (GitHub limit 6 jam)
-        for i in {1..360}
-        do
-          echo "⏰ Menit ke-$i: Menjaga koneksi AMD EPYC/Intel Xeon..."
+        echo "🔥 Langsung buka VNC Viewer, masukkan IP Tailscale di atas!"
+        for i in {1..360}; do
+          echo "⏰ Menit ke-$i: Runner AMD EPYC tetap ON..."
           sleep 60
         done
         
