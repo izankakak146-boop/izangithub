@@ -1,60 +1,54 @@
-name: Windows7_Izan_Final_Beneran
-on: workflow_dispatch
+name: Windows10Pro-CRD-Full
+
+on: 
+  workflow_dispatch:
+    inputs:
+      auth_code:
+        description: 'Masukkan Command CRD (DISPLAY=... /opt/google/... --code="...")'
+        required: true
+      pin_code:
+        description: 'Masukkan PIN CRD (6 Angka)'
+        required: true
+        default: '123456'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Siapkan Mesin (QEMU & Cloudflare)
+      - name: 🛠️ Setup Environment & Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
-          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-          sudo dpkg -i cloudflared-linux-amd64.deb
+          sudo apt update
+          wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+          sudo dpkg --install chrome-remote-desktop_current_amd64.deb || sudo apt install --fix-broken -y
+          sudo apt install qemu-system-x86 aria2 -y
 
-      - name: 2. Download ISO Windows 7 Lite (Link Stabil)
+      - name: 📥 Download Windows 10 Pro (Direct Link)
         run: |
-          # Pakai link yang lebih kencang ditarik server
-          wget -O win7.iso "https://bit.ly/win7lite-izan-direct" || \
-          curl -L -o win7.iso "https://github.com/SlametVVIP/ISO/raw/main/Win7_Lite.iso"
-          
-          # Proteksi biar gak "No Bootable Device" lagi
-          if [ ! -s win7.iso ]; then
-            echo "❌ ISO GAGAL DOWNLOAD, MEKANIK MENYERAH!"
-            exit 1
-          fi
+          aria2c -x 16 -s 16 -k 1M -o win10.iso "https://archive.org/download/windows-10-pro-x-64-en-us-activated/Windows%2010%20Pro%20x64%20en-US%20Activated.iso"
 
-      - name: 3. Goreng Windows 7 (RAM 8GB + AMD EPYC)
+      - name: 💿 Create Virtual Disk 60GB
+        run: qemu-img create -f qcow2 win10.qcow2 60G
+
+      - name: 🔑 Activate Chrome Remote Desktop
         run: |
-          # Buat harddisk virtual 20GB
-          qemu-img create -f qcow2 windows.qcow2 20G
-          
-          # Pakai -cpu host biar lari kenceng kayak motor balap
+          ${{ github.event.inputs.auth_code }} --pin=${{ github.event.inputs.pin_code }}
+
+      - name: 💻 Gaskeun Windows 10 (Fake GPU Mode)
+        run: |
           sudo qemu-system-x86_64 \
             -m 8G \
-            -smp 2 \
-            -cpu host \
-            -enable-kvm \
-            -drive file=windows.qcow2,format=qcow2 \
-            -cdrom win7.iso \
-            -device usb-ehci,id=usbbus \
-            -device usb-tablet,bus=usbbus.0 \
-            -vnc 0.0.0.0:0 \
-            -vga std \
+            -cpu qemu64,+ssse3,+sse4.1,+sse4.2,+x2apic \
+            -smp 4,cores=4 \
+            -vga virtio \
+            -display none \
+            -drive file=win10.qcow2,format=qcow2 \
+            -cdrom win10.iso \
             -boot d \
-            -display none &
-
-          sleep 20
-          websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
+            -device usb-ehci,id=usb -device usb-tablet,bus=usb.0 \
+            -net nic,model=virtio -net user \
+            -localtime &
           
-          echo "✅ Windows lagi dipanasin... Bismillah dapet logo Windows!"
-          sleep 60
-
-      - name: 4. Sajikan Link Windows 7 VVIP
-        run: |
-          echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COBA CEK LINK DI BAWAH INI!"
-          echo "Kalau muncul noVNC, tunggu bentar sampai logo muncul."
-          echo "-------------------------------------------------------"
-          cloudflared tunnel --url http://127.0.0.1:6080
+          echo "🔥 WINDOWS AKTIF!"
+          echo "⏳ Menjaga server tetap hidup selama 6 jam..."
+          sleep 21600
           
