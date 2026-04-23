@@ -1,42 +1,37 @@
-name: Windows10Pro-CRD-Final-Fix-V2
+name: Windows10-Tailscale-VNC
 
 on: 
   workflow_dispatch:
-    inputs:
-      auth_code:
-        description: 'Masukkan Command CRD (Yang ada --code=...)'
-        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 🛠️ Setup Tools
+      - name: 🛠️ Setup Tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+          sudo tailscale up --authkey=tskey-auth-knoQj9P1De11CNTRL-AqDZd4qiSZ4TNVmo2VcbZ4P83USh5phk
+
+      - name: 🛠️ Install QEMU & Aria2
         run: |
           sudo apt update
-          wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
-          sudo dpkg --install chrome-remote-desktop_current_amd64.deb || sudo apt install --fix-broken -y
           sudo apt install qemu-system-x86 aria2 -y
 
       - name: 📥 Download Windows 10 Pro
         run: |
           aria2c -x 16 -s 16 -k 1M -o win10.iso "https://archive.org/download/windows-10-pro-x-64-en-us-activated/Windows%2010%20Pro%20x64%20en-US%20Activated.iso"
 
-      - name: 💿 Create Disk
+      - name: 💿 Create Disk 60GB
         run: qemu-img create -f qcow2 win10.qcow2 60G
 
-      - name: 🔑 Activate Chrome Remote Desktop
-        run: |
-          ${{ github.event.inputs.auth_code }} --pin=123456
-
-      - name: 💻 Gaskeun Windows 10 (GPU Fake Active)
+      - name: 💻 Gaskeun Windows 10 (GPU Fake Mode)
         run: |
           sudo qemu-system-x86_64 \
             -m 8G \
             -cpu qemu64,+ssse3,+sse4.1,+sse4.2,+x2apic \
             -smp 4,cores=4 \
             -vga virtio \
-            -display none \
+            -display vnc=:0 \
             -drive file=win10.qcow2,format=qcow2 \
             -cdrom win10.iso \
             -boot d \
@@ -44,6 +39,8 @@ jobs:
             -net nic,model=virtio -net user \
             -rtc base=localtime &
           
-          echo "🔥 WINDOWS LAGI BOOTING! TUNGGU 1-2 MENIT TERUS CEK CRD."
+          echo "🔥 SERVER AKTIF!"
+          echo "🌐 CEK IP GITHUB RUNNER DI APLIKASI TAILSCALE HP KAMU"
+          echo "⏳ Menjaga server tetap hidup selama 6 jam..."
           sleep 21600
           
