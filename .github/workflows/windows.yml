@@ -1,4 +1,4 @@
-name: Windows10-Tailscale-VNC
+name: Windows10-Sultan-MultiFormat
 
 on: 
   workflow_dispatch:
@@ -12,35 +12,41 @@ jobs:
           curl -fsSL https://tailscale.com/install.sh | sh
           sudo tailscale up --authkey=tskey-auth-knoQj9P1De11CNTRL-AqDZd4qiSZ4TNVmo2VcbZ4P83USh5phk
 
-      - name: 🛠️ Install QEMU & Aria2
+      - name: 🛠️ Install QEMU & Extractor
         run: |
           sudo apt update
-          sudo apt install qemu-system-x86 aria2 -y
+          sudo apt install qemu-system-x86 aria2 unrar p7zip-full -y
 
-      - name: 📥 Download Windows 10 Pro
+      - name: 📥 Download & Extract Windows (Semua Format)
         run: |
-          aria2c -x 16 -s 16 -k 1M -o win10.iso "https://archive.org/download/windows-10-pro-x-64-en-us-activated/Windows%2010%20Pro%20x64%20en-US%20Activated.iso"
+          # Download dari link MediaFire kamu
+          aria2c -x 16 -s 16 -k 1M -o windows_data.rar "https://www.mediafire.com/file/1s7os2gn6kx5bu7/Windows_10_Enterprise_LTSC.rar/file?dkey=0tzvhep588r&r=1110"
+          
+          echo "📦 Mengekstrak file... Sabar ya Zan, ini bagian paling berat..."
+          unrar x windows_data.rar || 7z x windows_data.rar
+          
+          echo "📂 Daftar file hasil ekstrak:"
+          ls -R
 
-      - name: 💿 Create Disk 60GB
-        run: qemu-img create -f qcow2 win10.qcow2 60G
-
-      - name: 💻 Gaskeun Windows 10 (GPU Fake Mode)
+      - name: 💻 Gaskeun Windows (Fake GPU + Multi-Disk Support)
         run: |
+          # Cari file disk (vhd, qcow2, img, raw, iso) secara otomatis
+          DISK_FILE=$(ls *.vhd *.qcow2 *.img *.raw *.iso | head -n 1)
+          echo "💿 Menjalankan Disk: $DISK_FILE"
+
           sudo qemu-system-x86_64 \
             -m 8G \
             -cpu qemu64,+ssse3,+sse4.1,+sse4.2,+x2apic \
             -smp 4,cores=4 \
             -vga virtio \
             -display vnc=:0 \
-            -drive file=win10.qcow2,format=qcow2 \
-            -cdrom win10.iso \
-            -boot d \
+            -drive file="$DISK_FILE",format=raw \
             -device usb-ehci,id=usb -device usb-tablet,bus=usb.0 \
             -net nic,model=virtio -net user \
             -rtc base=localtime &
           
-          echo "🔥 SERVER AKTIF!"
-          echo "🌐 CEK IP GITHUB RUNNER DI APLIKASI TAILSCALE HP KAMU"
-          echo "⏳ Menjaga server tetap hidup selama 6 jam..."
+          echo "🔥 SERVER SUDAH STANDBY!"
+          echo "🌐 Device IP muncul di Tailscale HP kamu."
+          echo "⏳ Menjaga koneksi selama 6 jam..."
           sleep 21600
           
