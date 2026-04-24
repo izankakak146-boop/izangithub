@@ -1,4 +1,4 @@
-name: Windows10-LTSC-Direct-Sultan
+name: Windows10-Enterprise-AutoBypass
 
 on: 
   workflow_dispatch:
@@ -15,20 +15,26 @@ jobs:
       - name: 🛠️ Install QEMU & Extractor
         run: |
           sudo apt update
-          sudo apt install qemu-system-x86 aria2 unrar p7zip-full -y
+          sudo apt install qemu-system-x86 aria2 unrar p7zip-full grep curl -y
 
-      - name: 📥 Download & Extract Windows (Direct Link Mode)
+      - name: 📥 Download & Extract Windows (Smart Link Finder)
         run: |
-          # Menggunakan link direct MediaFire yang kamu kasih
-          aria2c -x 16 -s 16 -k 1M -o windows_data.rar "https://download1582.mediafire.com/glxio6ad87ygwqXet2UEWj-xTe9p_q3BIHL2YnbCv7qo9L-xQLgPs6fXvK9zoGqN_5clefzl36NUB8irc-k0IT4f6mSlOnp4XSVnFxIPfKZNkUMsRqUlcXh5J-PYb3RxMlo43pCh3uIDxZTu22-701pDG84Rl_UpgWdIM1NUET3CkZYZ/1s7os2gn6kx5bu7/Windows+10+Enterprise+LTSC.rar"
+          # Trik sakti: Mencari link download asli di dalam halaman MediaFire
+          URL="https://www.mediafire.com/file/0hvhcshw9lmbm1b/Windows+10+Enterprise.rar/file?dkey=680t9tl8v0p&r=1938"
+          DIRECT_LINK=$(curl -sL $URL | grep -oE 'https://download[^"]+' | head -n 1)
           
-          echo "📦 Mengekstrak file RAR... Sabar Zan, jangan emosi..."
+          echo "🎯 Link asli ketemu: $DIRECT_LINK"
+          
+          # Download pakai link asli yang sudah didapat
+          aria2c -x 16 -s 16 -k 1M -o windows_data.rar "$DIRECT_LINK"
+          
+          echo "📦 Mengekstrak file... Sabar ya Zan, jangan dibanting HP-nya..."
           unrar x -p- windows_data.rar || 7z x windows_data.rar
           
           echo "📂 Cek isi file hasil ekstrak:"
           ls -R
 
-      - name: 💻 Gaskeun Windows (Fake GPU + RTC Fix)
+      - name: 💻 Gaskeun Windows (Fake GPU Mode)
         run: |
           # Cari file disk (vhd, qcow2, img, raw, iso) otomatis
           DISK_FILE=$(ls *.vhd *.qcow2 *.img *.raw *.iso | head -n 1)
@@ -46,7 +52,7 @@ jobs:
             -rtc base=localtime &
           
           echo "🔥 SERVER SUDAH AKTIF!"
-          echo "🌐 Cek IP di Tailscale HP kamu."
+          echo "🌐 Cek IP di aplikasi Tailscale HP kamu."
           echo "⏳ Menjaga koneksi selama 6 jam..."
           sleep 21600
           
