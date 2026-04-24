@@ -1,4 +1,4 @@
-name: Windows10-Enterprise-Final-Fix4
+name: Windows10-Enterprise-Sultan-GPU
 
 on: 
   workflow_dispatch:
@@ -25,25 +25,27 @@ jobs:
           unrar x -p- windows_data.rar || 7z x windows_data.rar
           ls -R
 
-      - name: 💻 Gaskeun Windows (CPU & Format Fix)
+      - name: 💻 Gaskeun Windows (SATA Disk + Virtio GPU)
         run: |
           # Cari file disk otomatis
           DISK_FILE=$(ls *.vhd *.qcow2 *.img *.raw *.iso | head -n 1)
           echo "💿 Booting dari file: $DISK_FILE"
 
-          # Menggunakan cpu core2duo agar tidak komplain fitur x2apic
-          # Menggunakan format=qcow2/raw otomatis dengan deteksi ekstensi
+          # DISK pakai SATA (-device ahci) biar gak Blue Screen
+          # GPU pakai VIRTIO (-vga virtio) biar nongol di Task Manager
           sudo qemu-system-x86_64 \
             -m 8G \
             -cpu core2duo \
             -smp 4,cores=4 \
             -vga virtio \
             -display vnc=:0 \
-            -drive file="$DISK_FILE",if=virtio,cache=writeback \
+            -device ahci,id=ahci \
+            -drive file="$DISK_FILE",if=none,id=drive-sata0 -device ide-hd,bus=ahci.0,drive=drive-sata0 \
             -device usb-ehci,id=usb -device usb-tablet,bus=usb.0 \
-            -net nic,model=virtio -net user \
+            -net nic,model=e1000 -net user \
             -rtc base=localtime &
           
-          echo "🔥 SERVER AKTIF! CEK VNC SEKARANG."
+          echo "🔥 SERVER AKTIF! GAS CEK VNC."
+          echo "📊 GPU 0 bakal nongol di Task Manager, pantau terus Zan!"
           sleep 21600
           
