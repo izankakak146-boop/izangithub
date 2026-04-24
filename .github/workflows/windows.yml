@@ -1,4 +1,4 @@
-name: Windows10-Enterprise-AutoBypass
+name: Windows10-Enterprise-Final-Fix
 
 on: 
   workflow_dispatch:
@@ -17,42 +17,33 @@ jobs:
           sudo apt update
           sudo apt install qemu-system-x86 aria2 unrar p7zip-full grep curl -y
 
-      - name: 📥 Download & Extract Windows (Smart Link Finder)
+      - name: 📥 Download & Extract Windows (Smart Bypass)
         run: |
-          # Trik sakti: Mencari link download asli di dalam halaman MediaFire
           URL="https://www.mediafire.com/file/0hvhcshw9lmbm1b/Windows+10+Enterprise.rar/file?dkey=680t9tl8v0p&r=1938"
           DIRECT_LINK=$(curl -sL $URL | grep -oE 'https://download[^"]+' | head -n 1)
-          
-          echo "🎯 Link asli ketemu: $DIRECT_LINK"
-          
-          # Download pakai link asli yang sudah didapat
           aria2c -x 16 -s 16 -k 1M -o windows_data.rar "$DIRECT_LINK"
-          
-          echo "📦 Mengekstrak file... Sabar ya Zan, jangan dibanting HP-nya..."
           unrar x -p- windows_data.rar || 7z x windows_data.rar
-          
-          echo "📂 Cek isi file hasil ekstrak:"
           ls -R
 
-      - name: 💻 Gaskeun Windows (Fake GPU Mode)
+      - name: 💻 Gaskeun Windows (CPU & Format Fix)
         run: |
-          # Cari file disk (vhd, qcow2, img, raw, iso) otomatis
+          # Cari file disk otomatis
           DISK_FILE=$(ls *.vhd *.qcow2 *.img *.raw *.iso | head -n 1)
           echo "💿 Booting dari file: $DISK_FILE"
 
+          # Menggunakan cpu core2duo agar tidak komplain fitur x2apic
+          # Menggunakan format=qcow2/raw otomatis dengan deteksi ekstensi
           sudo qemu-system-x86_64 \
             -m 8G \
-            -cpu qemu64,+ssse3,+sse4.1,+sse4.2,+x2apic \
+            -cpu core2duo \
             -smp 4,cores=4 \
             -vga virtio \
             -display vnc=:0 \
-            -drive file="$DISK_FILE",format=raw \
+            -drive file="$DISK_FILE",if=virtio,cache=writeback \
             -device usb-ehci,id=usb -device usb-tablet,bus=usb.0 \
             -net nic,model=virtio -net user \
             -rtc base=localtime &
           
-          echo "🔥 SERVER SUDAH AKTIF!"
-          echo "🌐 Cek IP di aplikasi Tailscale HP kamu."
-          echo "⏳ Menjaga koneksi selama 6 jam..."
+          echo "🔥 SERVER AKTIF! CEK VNC SEKARANG."
           sleep 21600
           
