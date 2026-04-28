@@ -1,61 +1,83 @@
-name: Bot WA Izan Final Reborn
+name: WhatsApp-AI-6-Jam
 on:
   workflow_dispatch:
-    inputs:
-      nomor_wa:
-        description: 'Masukkan Nomor WA (628xxx)'
-        required: true
 
 jobs:
-  get-code:
+  run-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: Create Script and Run
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Generate Bot Files
         run: |
-          cat <<EOF > index.js
-          const { default: makeWASocket, useMultiFileAuthState, delay, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = require('@whiskeysockets/baileys');
-          const pino = require('pino');
+          echo '{"dependencies": {"@whiskeysockets/baileys": "^6.6.0", "pino": "^8.19.0", "readline": "^1.3.0"}}' > package.json
+          
+          cat << 'EOF' > index.js
+          const { default: makeWASocket, useMultiFileAuthState, delay, DisconnectReason } = require("@whiskeysockets/baileys");
+          const pino = require("pino");
 
           async function start() {
-              // Ganti nama folder jadi 'session_reborn' biar fresh total
-              const { state, saveCreds } = await useMultiFileAuthState('session_reborn');
-              const { version, isLatest } = await fetchLatestBaileysVersion();
-              
-              console.log("Menggunakan WA Versi: " + version + " (Latest: " + isLatest + ")");
-
+              const { state, saveCreds } = await useMultiFileAuthState('session_izan');
               const sock = makeWASocket({
-                  auth: {
-                    creds: state.creds,
-                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })),
-                  },
+                  auth: state,
                   printQRInTerminal: false,
-                  logger: pino({ level: 'silent' }),
-                  // Pakai identitas Chrome paling standar biar gak dicurigai
-                  browser: ["Ubuntu", "Chrome", "120.0.0.0"]
+                  logger: pino({ level: "silent" }),
+                  browser: ["Ubuntu", "Chrome", "20.0.04"]
               });
 
-              const phoneNumber = "${{ github.event.inputs.nomor_wa }}";
-              sock.ev.on('creds.update', saveCreds);
-
-              await delay(10000); 
-
-              try {
-                  const code = await sock.requestPairingCode(phoneNumber);
-                  console.log('\n========================================');
-                  console.log('KODE PAIRING BARU: ' + code);
-                  console.log('========================================\n');
-                  
-                  // Menjaga agar GitHub tetap hidup 6 jam
-                  await delay(21600000); 
-              } catch (e) { 
-                  console.log("Error: " + e.message);
-                  process.exit(1); 
+              if (!sock.authState.creds.registered) {
+                  const phoneNumber = "62882007167938"; 
+                  console.log("Meminta kode pairing untuk: " + phoneNumber);
+                  await delay(7000); // Jeda sedikit lebih lama biar stabil
+                  try {
+                      const code = await sock.requestPairingCode(phoneNumber);
+                      console.log("\n\x1b[42m\x1b[30m KODE PAIRING ANDA: " + code + " \x1b[0m\n");
+                  } catch (err) {
+                      console.error("Gagal minta pairing code, coba lagi...", err);
+                  }
               }
+
+              sock.ev.on("connection.update", (u) => {
+                  const { connection, lastDisconnect } = u;
+                  if (connection === "open") console.log("--- BOT ONLINE (AKTIF 6 JAM) ---");
+                  if (connection === "close") {
+                      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+                      if (shouldReconnect) start();
+                  }
+              });
+
+              sock.ev.on("creds.update", saveCreds);
+
+              sock.ev.on("messages.upsert", async (m) => {
+                  const msg = m.messages[0];
+                  if (!msg.message || msg.key.fromMe) return;
+                  const from = msg.key.remoteJid;
+                  const text = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
+
+                  // Respon otomatis kalau ada yang chat
+                  if (text.toLowerCase().includes("halo")) {
+                      await sock.sendMessage(from, { text: "Halo! Saya bot Izan, lagi online di GitHub selama 6 jam." });
+                  }
+              });
+
+              // --- FUNGSI BIAR TIDAK MATI SELAMA 6 JAM ---
+              console.log("Timer 6 jam dimulai...");
+              setTimeout(() => {
+                  console.log("Waktu 6 jam habis. Bot dimatikan.");
+                  process.exit(0);
+              }, 21600000); 
           }
           start();
           EOF
 
-          npm init -y
-          npm install @whiskeysockets/baileys pino
+      - name: Install & Launch
+        run: |
+          npm install
           node index.js
           
