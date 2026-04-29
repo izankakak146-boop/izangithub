@@ -1,0 +1,61 @@
+name: Windows Ghost Ninja
+on: 
+  workflow_dispatch:
+    inputs:
+      auth_code:
+        description: 'Tempel Kode PowerShell dari Google di Sini'
+        required: true
+
+jobs:
+  run-ghost:
+    runs-on: windows-latest
+    steps:
+      - name: 1. Instalasi CRD Kilat (Manual Fix)
+        shell: powershell
+        run: |
+          $msiPath = "$env:TEMP\crd.msi"
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile $msiPath
+          Start-Process msiexec.exe -Wait -ArgumentList "/i $msiPath /qn /norestart /l*v $env:TEMP\msi.log"
+          Write-Host "CRD Terpasang!"
+
+      - name: 2. Tambah Disk Tambahan 20GB (Raw to Mounted)
+        shell: powershell
+        run: |
+          $vhdPath = "C:\ExtraDisk.vhd"
+          $mountPoint = "Z" # Nanti bakal jadi Drive Z:
+          
+          Write-Host "Lagi bikin VHD 20GB, tunggu bentar..."
+          # Bikin file VHD 20GB
+          New-VHD -Path $vhdPath -SizeBytes 20GB -Dynamic | Mount-VHD
+          
+          # Inisialisasi disk, partisi, dan format ke NTFS
+          $disk = Get-VHD -Path $vhdPath | Get-Disk
+          $disk | Initialize-Disk -PartitionStyle GPT
+          $partition = $disk | New-Partition -AssignDriveLetter -UseMaximumSize
+          Format-Volume -DriveLetter $partition.DriveLetter -FileSystem NTFS -NewFileSystemLabel "GhostDisk" -Confirm:$false
+          
+          Write-Host "Disk 20GB Berhasil di-mount ke Drive $($partition.DriveLetter):"
+
+      - name: 3. Eksekusi Kode Google
+        shell: powershell
+        run: |
+          $GoogleCode = @'
+          ${{ github.event.inputs.auth_code }}
+          '@
+          $CleanCode = $GoogleCode.Trim()
+          if ($CleanCode -like '*remoting_start_host.exe*') {
+              $FinalCommand = $CleanCode + ' --pin=123456'
+              Invoke-Expression $FinalCommand
+              Write-Host "Host Berhasil Dijalankan! PIN: 123456"
+          } else {
+              Write-Error "Kodenya salah bang, coba ambil yang PowerShell!"
+          }
+
+      - name: 4. Pasukan Hantu
+        shell: powershell
+        run: |
+          $vbsPath = "$env:USERPROFILE\Desktop\hantu.vbs"
+          'x = MsgBox("HANTU WINDOWS BERAKSI DAN DISK 20GB READY!", 16, "SISTEM ERROR")' | Out-File -FilePath $vbsPath -Encoding ascii
+          Start-Sleep -Seconds 21600
+          
