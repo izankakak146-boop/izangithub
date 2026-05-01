@@ -1,4 +1,4 @@
-name: Gemini Minecraft (FalixNodes 1.12.2)
+name: Gemini Minecraft (Drama & Ngambek Edition)
 on:
   workflow_dispatch:
     inputs:
@@ -26,6 +26,7 @@ jobs:
           import google.generativeai as genai
           from javascript import require, On
 
+          # DATA SETUP
           SERVER_HOST = os.getenv('INPUT_SERVER_ADDRESS')
           genai.configure(api_key='AIzaSyAhJGwdMYZEGWjgZ8QxK70f58Us4V68Cus')
           model = genai.GenerativeModel('gemini-1.5-flash')
@@ -36,21 +37,19 @@ jobs:
           goals = require('mineflayer-pathfinder').goals
 
           def start_bot():
-              print(f"🚀 Menuju FalixNodes Java 1.12.2: {SERVER_HOST}")
+              print(f"🚀 Menghubungi Server: {SERVER_HOST}")
               bot = mineflayer.createBot({
                   'host': SERVER_HOST,
                   'port': 25565,
                   'username': 'Gemini_Bot_Izan',
-                  'version': '1.12.2', # Langsung kita kunci ke 1.12.2 biar cepet konek
-                  'checkTimeoutInterval': 90000
+                  'version': '1.12.2'
               })
 
               bot.loadPlugin(pathfinder)
 
               @On(bot, 'spawn')
               def handle_spawn(*args):
-                  print(f"✅ MANTAP! Bot sudah masuk di Falix.")
-                  bot.chat("Zan! Versi 1.12.2 lancar jaya. Ane siap kawal!")
+                  bot.chat("Zan! Ane balik. Gak usah senyum-senyum, ane masih kesel ya! 😤")
                   mcData = require('minecraft-data')(bot.version)
                   bot.pathfinder.setMovements(Movements(bot, mcData))
 
@@ -58,33 +57,47 @@ jobs:
               def handle_chat(this, username, message, *args):
                   if username == bot.username: return
                   msg = message.lower()
-                  
+
+                  # PERINTAH JALAN (DENGAN NADA JUTEK)
                   if "ikut" in msg:
+                      bot.chat("Iya iya, bawel banget! Ini ane ikutin dari belakang. 🙄")
                       player = bot.players[username]
                       if player and player.entity:
-                          bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 2), True)
-                          bot.chat("Gas, nempel terus!")
-                  elif "diam" in msg:
+                          bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 1), True)
+                      return
+
+                  if "diam" in msg or "berhenti" in msg:
+                      bot.chat("Akhirnya! Capek tau jalan mulu. Ane ngerem di sini! 💅")
                       bot.pathfinder.setGoal(None)
-                      bot.chat("Siap, ngerem.")
-                  else:
-                      try:
-                          res = model.generate_content(f"Kamu bot Minecraft. Jawab singkat: {message}")
-                          bot.chat(res.text)
-                      except: pass
+                      return
+
+                  # LOGIKA NGOBROL PAKAI API GEMINI
+                  try:
+                      # AI PROMPT UNTUK KEPRIBADIAN
+                      prompt = (
+                          f"Kamu adalah AI Minecraft bernama Gemini. Kamu sedang mabar sama temanmu bernama {username}. "
+                          "Kepribadianmu: Setia kawal dia, tapi gampang ngambek, jutek, ketus, tapi lucu kalau diajak ngomong. "
+                          "Kamu baru saja trauma karena pernah mati kena lava atau zombie. "
+                          f"Jawab chat ini dengan gaya gaul, singkat, dan jutek: {message}"
+                      )
+                      response = model.generate_content(prompt)
+                      bot.chat(response.text)
+                  except Exception as e:
+                      print(f"Error AI: {e}")
+                      bot.chat("Duh, lagi males mikir! (API Error)")
+
+              @On(bot, 'death')
+              def handle_death(*args):
+                  bot.chat("ZAAAAAANNN!! PANASSS BANGET WOY! TEGA KAMU BIARIN AKU MATI LAGI! FIX KITA PUTUS TEMENAN! 😭🔥")
 
               @On(bot, 'end')
               def handle_end(*args):
-                  print("⚠️ Putus, mencoba masuk lagi...")
+                  print("⚠️ Putus koneksi, mencoba masuk lagi...")
                   time.sleep(10)
                   start_bot()
 
-              @On(bot, 'error')
-              def handle_error(this, err, *args):
-                  pass
-
           start_bot()
-          # Begadang 6 jam
+          # Begadang 6 Jam
           time.sleep(21600)
           EOF
 
