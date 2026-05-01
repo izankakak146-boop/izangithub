@@ -1,0 +1,91 @@
+name: Gemini Minecraft Runner (Aternos)
+on:
+  workflow_dispatch:
+    inputs:
+      server_address:
+        description: 'Masukkan Alamat Server Aternos (contoh: izan.aternos.me)'
+        required: true
+        default: 'izan.aternos.me'
+
+jobs:
+  run-gemini-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          pip install google-generativeai javascript
+          npm install mineflayer mineflayer-pathfinder minecraft-data
+
+      - name: Create Python Script
+        run: |
+          cat << 'EOF' > bot.py
+          import os
+          import google.generativeai as genai
+          from javascript import require, On
+
+          # AMBIL DATA DARI GITHUB INPUTS
+          SERVER_HOST = os.getenv('INPUT_SERVER_ADDRESS')
+
+          # KONFIGURASI AI GEMINI
+          genai.configure(api_key='AIzaSyAhJGwdMYZEGWjgZ8QxK70f58Us4V68Cus')
+          model = genai.GenerativeModel('gemini-1.5-flash')
+
+          mineflayer = require('mineflayer')
+          pathfinder = require('mineflayer-pathfinder').pathfinder
+          Movements = require('mineflayer-pathfinder').Movements
+          goals = require('mineflayer-pathfinder').goals
+
+          print(f"🚀 Mencoba konek ke: {SERVER_HOST}")
+
+          bot = mineflayer.createBot({
+              'host': SERVER_HOST,
+              'port': 25565,
+              'username': 'Gemini_Bot_Izan',
+              'version': False # Otomatis deteksi versi server
+          })
+
+          bot.loadPlugin(pathfinder)
+
+          @On(bot, 'spawn')
+          def handle_spawn(*args):
+              print(f"✅ BERHASIL! Bot sudah masuk ke {SERVER_HOST}")
+              mcData = require('minecraft-data')(bot.version)
+              bot.pathfinder.setMovements(Movements(bot, mcData))
+
+          @On(bot, 'chat')
+          def handle_chat(this, username, message, *args):
+              if username == bot.username: return
+              msg = message.lower()
+              
+              if "ikut" in msg:
+                  player = bot.players[username]
+                  if player and player.entity:
+                      bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 2), True)
+                      bot.chat("Gas, ane kawal ente!")
+              elif "diam" in msg:
+                  bot.pathfinder.setGoal(None)
+                  bot.chat("Oke, ngerem di sini.")
+              else:
+                  # Respon AI Gemini
+                  try:
+                      res = model.generate_content(f"Kamu bot Minecraft. Jawab singkat & gaul: {message}")
+                      bot.chat(res.text)
+                  except:
+                      bot.chat("Duh, lagi lemot otaknya!")
+
+          @On(bot, 'kicked')
+          def handle_kicked(this, reason, *args):
+              print(f"❌ Ditendang dari server: {reason}")
+
+          @On(bot, 'error')
+          def handle_error(this, err, *args):
+              print(f"⚠️ Error: {err}")
+
+          EOF
+
+      - name: Run Bot
+        env:
+          INPUT_SERVER_ADDRESS: ${{ github.event.inputs.server_address }}
+        run: python bot.py
+        
