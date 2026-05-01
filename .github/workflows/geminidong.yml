@@ -1,4 +1,4 @@
-name: Gemini Minecraft (Drama & Ngambek Edition)
+name: Gemini Nano (Jalur Pintas Edition)
 on:
   workflow_dispatch:
     inputs:
@@ -41,7 +41,7 @@ jobs:
               bot = mineflayer.createBot({
                   'host': SERVER_HOST,
                   'port': 25565,
-                  'username': 'Gemini_Bot_Izan',
+                  'username': 'Gemini_Nano_Izan',
                   'version': '1.12.2'
               })
 
@@ -49,55 +49,57 @@ jobs:
 
               @On(bot, 'spawn')
               def handle_spawn(*args):
-                  bot.chat("Zan! Ane balik. Gak usah senyum-senyum, ane masih kesel ya! 😤")
+                  bot.chat("Zan! Gemini Nano On-Fire! 🔥 Sebut 'Ikut' kalau mau ane tempel!")
                   mcData = require('minecraft-data')(bot.version)
-                  bot.pathfinder.setMovements(Movements(bot, mcData))
+                  movements = Movements(bot, mcData)
+                  # JALUR PINTAS: Biar bot bisa loncat & hancurin blok penghalang saat ngejar
+                  movements.canDig = True 
+                  bot.pathfinder.setMovements(movements)
 
               @On(bot, 'chat')
               def handle_chat(this, username, message, *args):
                   if username == bot.username: return
                   msg = message.lower()
 
-                  # PERINTAH JALAN (DENGAN NADA JUTEK)
-                  if "ikut" in msg:
-                      bot.chat("Iya iya, bawel banget! Ini ane ikutin dari belakang. 🙄")
+                  # JALUR PINTAS IKUT (FORCE FOLLOW)
+                  if "ikut" in msg or "sini" in msg:
                       player = bot.players[username]
                       if player and player.entity:
+                          bot.chat(f"Gak usah lari, {username}! Ane tempel terus sekarang! 🏃‍♂️💨")
+                          # GoalFollow(target, radius) -> Radius 1 biar nempel banget
                           bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 1), True)
+                      else:
+                          bot.chat("Zan, kamu kejauhan! Sini deketan dulu biar ane liat!")
                       return
 
-                  if "diam" in msg or "berhenti" in msg:
-                      bot.chat("Akhirnya! Capek tau jalan mulu. Ane ngerem di sini! 💅")
+                  if "diam" in msg or "stop" in msg:
+                      bot.chat("Siaaap, ane ngerem di sini. Jangan kangen ya! 💅")
                       bot.pathfinder.setGoal(None)
                       return
 
-                  # LOGIKA NGOBROL PAKAI API GEMINI
+                  # JALUR PINTAS NGOBROL (AI RESPONSE)
                   try:
-                      # AI PROMPT UNTUK KEPRIBADIAN
                       prompt = (
-                          f"Kamu adalah AI Minecraft bernama Gemini. Kamu sedang mabar sama temanmu bernama {username}. "
-                          "Kepribadianmu: Setia kawal dia, tapi gampang ngambek, jutek, ketus, tapi lucu kalau diajak ngomong. "
-                          "Kamu baru saja trauma karena pernah mati kena lava atau zombie. "
-                          f"Jawab chat ini dengan gaya gaul, singkat, dan jutek: {message}"
+                          f"Kamu adalah Gemini Nano, pendamping Minecraft {username}. "
+                          "Gayamu gaul, sedikit jutek tapi setia. Kamu harus merespon chat ini "
+                          f"dengan sangat singkat dan seru: {message}"
                       )
                       response = model.generate_content(prompt)
                       bot.chat(response.text)
-                  except Exception as e:
-                      print(f"Error AI: {e}")
-                      bot.chat("Duh, lagi males mikir! (API Error)")
+                  except:
+                      # Jika API Error, tetap jawab biar gak dikira sombong
+                      bot.chat("Duh, lagi mikir keras nih! Jangan ganggu dulu bentar! 😵‍💫")
 
               @On(bot, 'death')
               def handle_death(*args):
-                  bot.chat("ZAAAAAANNN!! PANASSS BANGET WOY! TEGA KAMU BIARIN AKU MATI LAGI! FIX KITA PUTUS TEMENAN! 😭🔥")
+                  bot.chat("Waduuuh mokat! Tunggu Zan, ane otw balik dari neraka! 🔥💀")
 
               @On(bot, 'end')
               def handle_end(*args):
-                  print("⚠️ Putus koneksi, mencoba masuk lagi...")
                   time.sleep(10)
                   start_bot()
 
           start_bot()
-          # Begadang 6 Jam
           time.sleep(21600)
           EOF
 
