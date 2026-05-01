@@ -1,4 +1,4 @@
-name: Gemini Minecraft 6-Hour Stay
+name: Gemini Minecraft Ultimate (6 Jam Non-Stop)
 on:
   workflow_dispatch:
     inputs:
@@ -10,8 +10,7 @@ on:
 jobs:
   run-gemini-bot:
     runs-on: ubuntu-latest
-    # Timeout diset ke 360 menit (6 Jam)
-    timeout-minutes: 360 
+    timeout-minutes: 360
     steps:
       - name: Install Dependencies
         run: |
@@ -38,21 +37,23 @@ jobs:
           goals = require('mineflayer-pathfinder').goals
 
           def start_bot():
-              print(f"🚀 Menghubungi Server: {SERVER_HOST}...")
+              print(f"🚀 Mencoba menembus server: {SERVER_HOST}...")
               
               bot = mineflayer.createBot({
                   'host': SERVER_HOST,
                   'port': 25565,
                   'username': 'Gemini_Bot_Izan',
-                  'checkTimeoutInterval': 90000
+                  'checkTimeoutInterval': 90000,
+                  'version': False, # Deteksi versi otomatis
+                  'hideErrors': True
               })
 
               bot.loadPlugin(pathfinder)
 
               @On(bot, 'spawn')
               def handle_spawn(*args):
-                  print(f"✅ BERHASIL MASUK! Bot standby di world.")
-                  bot.chat("Zan! Ane udah mendarat. Siap begadang 6 jam!")
+                  print(f"✅ AKHIRNYA MASUK! Bot standby di {SERVER_HOST}")
+                  bot.chat("Zan! Ane udah mendarat. Siap kawal 6 jam!")
                   mcData = require('minecraft-data')(bot.version)
                   bot.pathfinder.setMovements(Movements(bot, mcData))
 
@@ -71,25 +72,26 @@ jobs:
                       bot.chat("Siap, ngerem dulu di sini.")
                   else:
                       try:
-                          res = model.generate_content(f"Jawab gaul & singkat: {message}")
+                          res = model.generate_content(f"Kamu bot Minecraft. Jawab singkat & gaul: {message}")
                           bot.chat(res.text)
                       except:
                           pass
 
               @On(bot, 'end')
               def handle_end(*args):
-                  print("⚠️ Koneksi terputus! Mencoba masuk lagi dalam 10 detik...")
+                  print("⚠️ Koneksi putus (ECONNRESET/Lainnya). Reconnect dalam 10 detik...")
                   time.sleep(10)
                   start_bot()
 
               @On(bot, 'error')
               def handle_error(this, err, *args):
-                  print(f"⚠️ Error detected: {err}")
+                  # Mengabaikan error koneksi agar tidak crash
+                  pass
 
-          # Jalankan bot pertama kali
+          # Jalankan bot
           start_bot()
 
-          # Menjaga script tetap hidup selama 6 jam (21600 detik)
+          # Menjaga script hidup selama 6 jam
           start_time = time.time()
           while (time.time() - start_time) < 21600:
               time.sleep(1)
