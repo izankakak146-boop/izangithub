@@ -1,15 +1,17 @@
-name: Gemini Minecraft Runner (Aternos)
+name: Gemini Minecraft 6-Hour Stay
 on:
   workflow_dispatch:
     inputs:
       server_address:
-        description: 'Masukkan Alamat Server Aternos (contoh: izan.aternos.me)'
+        description: 'Masukkan Alamat Server Aternos'
         required: true
-        default: 'izan.aternos.me'
+        default: 'izankakak.aternos.me'
 
 jobs:
   run-gemini-bot:
     runs-on: ubuntu-latest
+    # Timeout diset ke 360 menit (6 Jam)
+    timeout-minutes: 360 
     steps:
       - name: Install Dependencies
         run: |
@@ -21,13 +23,12 @@ jobs:
         run: |
           cat << 'EOF' > bot.py
           import os
+          import time
           import google.generativeai as genai
           from javascript import require, On
 
-          # AMBIL DATA DARI GITHUB INPUTS
+          # DATA DARI USER
           SERVER_HOST = os.getenv('INPUT_SERVER_ADDRESS')
-
-          # KONFIGURASI AI GEMINI
           genai.configure(api_key='AIzaSyAhJGwdMYZEGWjgZ8QxK70f58Us4V68Cus')
           model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -36,52 +37,62 @@ jobs:
           Movements = require('mineflayer-pathfinder').Movements
           goals = require('mineflayer-pathfinder').goals
 
-          print(f"🚀 Mencoba konek ke: {SERVER_HOST}")
-
-          bot = mineflayer.createBot({
-              'host': SERVER_HOST,
-              'port': 25565,
-              'username': 'Gemini_Bot_Izan',
-              'version': False # Otomatis deteksi versi server
-          })
-
-          bot.loadPlugin(pathfinder)
-
-          @On(bot, 'spawn')
-          def handle_spawn(*args):
-              print(f"✅ BERHASIL! Bot sudah masuk ke {SERVER_HOST}")
-              mcData = require('minecraft-data')(bot.version)
-              bot.pathfinder.setMovements(Movements(bot, mcData))
-
-          @On(bot, 'chat')
-          def handle_chat(this, username, message, *args):
-              if username == bot.username: return
-              msg = message.lower()
+          def start_bot():
+              print(f"🚀 Menghubungi Server: {SERVER_HOST}...")
               
-              if "ikut" in msg:
-                  player = bot.players[username]
-                  if player and player.entity:
-                      bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 2), True)
-                      bot.chat("Gas, ane kawal ente!")
-              elif "diam" in msg:
-                  bot.pathfinder.setGoal(None)
-                  bot.chat("Oke, ngerem di sini.")
-              else:
-                  # Respon AI Gemini
-                  try:
-                      res = model.generate_content(f"Kamu bot Minecraft. Jawab singkat & gaul: {message}")
-                      bot.chat(res.text)
-                  except:
-                      bot.chat("Duh, lagi lemot otaknya!")
+              bot = mineflayer.createBot({
+                  'host': SERVER_HOST,
+                  'port': 25565,
+                  'username': 'Gemini_Bot_Izan',
+                  'checkTimeoutInterval': 90000
+              })
 
-          @On(bot, 'kicked')
-          def handle_kicked(this, reason, *args):
-              print(f"❌ Ditendang dari server: {reason}")
+              bot.loadPlugin(pathfinder)
 
-          @On(bot, 'error')
-          def handle_error(this, err, *args):
-              print(f"⚠️ Error: {err}")
+              @On(bot, 'spawn')
+              def handle_spawn(*args):
+                  print(f"✅ BERHASIL MASUK! Bot standby di world.")
+                  bot.chat("Zan! Ane udah mendarat. Siap begadang 6 jam!")
+                  mcData = require('minecraft-data')(bot.version)
+                  bot.pathfinder.setMovements(Movements(bot, mcData))
 
+              @On(bot, 'chat')
+              def handle_chat(this, username, message, *args):
+                  if username == bot.username: return
+                  msg = message.lower()
+                  
+                  if "ikut" in msg:
+                      player = bot.players[username]
+                      if player and player.entity:
+                          bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 2), True)
+                          bot.chat(f"Otw kawal bang {username}!")
+                  elif "diam" in msg:
+                      bot.pathfinder.setGoal(None)
+                      bot.chat("Siap, ngerem dulu di sini.")
+                  else:
+                      try:
+                          res = model.generate_content(f"Jawab gaul & singkat: {message}")
+                          bot.chat(res.text)
+                      except:
+                          pass
+
+              @On(bot, 'end')
+              def handle_end(*args):
+                  print("⚠️ Koneksi terputus! Mencoba masuk lagi dalam 10 detik...")
+                  time.sleep(10)
+                  start_bot()
+
+              @On(bot, 'error')
+              def handle_error(this, err, *args):
+                  print(f"⚠️ Error detected: {err}")
+
+          # Jalankan bot pertama kali
+          start_bot()
+
+          # Menjaga script tetap hidup selama 6 jam (21600 detik)
+          start_time = time.time()
+          while (time.time() - start_time) < 21600:
+              time.sleep(1)
           EOF
 
       - name: Run Bot
