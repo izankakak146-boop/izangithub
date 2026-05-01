@@ -1,51 +1,59 @@
-name: Android9_Izan_Final_Beneran
+name: Android9_Izan_Tailscale_Edition
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Amunisi Lengkap
+      - name: 1. Install Amunisi & Tailscale
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 novnc websockify qemu-utils
-          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-          sudo dpkg -i cloudflared-linux-amd64.deb
+          sudo apt-get install -y qemu-system-x86 qemu-utils
+          # Install Tailscale resmi
+          curl -fsSL https://tailscale.com/install.sh | sh
 
-      - name: 2. Download ISO Android 9
+      - name: 2. Konek Tailscale (Jalur VVIP)
+        run: |
+          # Pakai Auth Token kamu biar langsung login
+          sudo tailscale up --authkey tskey-auth-kyDLXfCXDG11CNTRL-WDQhNW3ZykD3pxV8JDP8mDzGByHxGWCXV
+
+      - name: 3. Download ISO Android 9
         run: |
           wget -O android9.iso "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso"
 
-      - name: 3. Goreng Mesin (Pakai Perintah -append yang Benar)
+      - name: 4. Goreng Mesin Android x86
         run: |
-          qemu-img create -f qcow2 android.qcow2 10G
+          qemu-img create -f qcow2 android.qcow2 15G
           
-          # -append adalah perintah yang benar, bukan -kernel-cmdline
+          # Pakai VNC di port default 5900
+          # Kita tambahin RAM jadi 8GB biar ngebut kayak iQOO tadi!
           sudo qemu-system-x86_64 \
             -m 8G \
-            -smp 2 \
+            -smp 4 \
             -cpu host \
             -enable-kvm \
             -drive file=android.qcow2,format=qcow2 \
             -cdrom android9.iso \
+            -boot d \
             -device usb-ehci,id=usbbus \
             -device usb-tablet,bus=usbbus.0 \
             -vnc 0.0.0.0:0 \
             -vga std \
             -display none &
 
-          sleep 10
-          # Websockify dengerin semua IP (0.0.0.0) biar gak mental
-          websockify --web /usr/share/novnc/ 6080 0.0.0.0:5900 &
+          echo "✅ Android lagi booting di background..."
+          echo "Ditunggu ya bos, biarin dia install atau masuk menu dulu."
           
-          echo "✅ Mesin lagi proses booting..."
-          sleep 60
-
-      - name: 4. Sajikan Link VVIP
+      - name: 5. Info Koneksi
         run: |
           echo "-------------------------------------------------------"
-          echo "🚀 IZAN, COBA LAGI SEKARANG!"
-          echo "Gak bakal ada error 'Invalid Option' lagi."
+          echo "🚀 IZAN, MESIN SUDAH SIAP!"
+          echo "1. Buka aplikasi Tailscale di HP kamu."
+          echo "2. Cari device bernama 'ubuntu-latest' atau sejenisnya."
+          echo "3. Copy IP Tailscale-nya."
+          echo "4. Buka aplikasi VNC Viewer, masukin IP itu dengan port 5900."
+          echo "Contoh: 100.xxx.xxx.xxx:5900"
           echo "-------------------------------------------------------"
-          cloudflared tunnel --url http://127.0.0.1:6080
+          # Bikin workflow tetep jalan terus biar gak mati
+          sleep 21600
           
