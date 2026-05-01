@@ -1,16 +1,15 @@
-name: Gemini Nano (Jalur Pintas Edition)
+name: Gemini Nano Aternos Shortcut
 on:
   workflow_dispatch:
     inputs:
       server_address:
-        description: 'Masukkan Alamat FalixNodes'
+        description: 'Masukkan Alamat Aternos Kamu (Contoh: izan.aternos.me)'
         required: true
-        default: 'alynizan.falixsrv.me'
 
 jobs:
   run-gemini-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 360 # Standby 6 jam
     steps:
       - name: Install Dependencies
         run: |
@@ -26,7 +25,7 @@ jobs:
           import google.generativeai as genai
           from javascript import require, On
 
-          # DATA SETUP
+          # SETUP KONEKSI
           SERVER_HOST = os.getenv('INPUT_SERVER_ADDRESS')
           genai.configure(api_key='AIzaSyAhJGwdMYZEGWjgZ8QxK70f58Us4V68Cus')
           model = genai.GenerativeModel('gemini-1.5-flash')
@@ -37,23 +36,23 @@ jobs:
           goals = require('mineflayer-pathfinder').goals
 
           def start_bot():
-              print(f"🚀 Menghubungi Server: {SERVER_HOST}")
+              print(f"🚀 Menuju Aternos: {SERVER_HOST}")
               bot = mineflayer.createBot({
                   'host': SERVER_HOST,
                   'port': 25565,
                   'username': 'Gemini_Nano_Izan',
-                  'version': '1.12.2'
+                  'version': '1.12.2', # Tetap pakai Java 1.12.2 biar enteng
+                  'checkTimeoutInterval': 60000 # Lebih peka biar gak gampang DC
               })
 
               bot.loadPlugin(pathfinder)
 
               @On(bot, 'spawn')
               def handle_spawn(*args):
-                  bot.chat("Zan! Gemini Nano On-Fire! 🔥 Sebut 'Ikut' kalau mau ane tempel!")
+                  bot.chat("Zan! Gemini Nano balik ke Aternos nih. Gas mabar lagi! 🔥")
                   mcData = require('minecraft-data')(bot.version)
                   movements = Movements(bot, mcData)
-                  # JALUR PINTAS: Biar bot bisa loncat & hancurin blok penghalang saat ngejar
-                  movements.canDig = True 
+                  movements.canDig = True # Jalur pintas: bisa gali blok penghalang
                   bot.pathfinder.setMovements(movements)
 
               @On(bot, 'chat')
@@ -65,15 +64,14 @@ jobs:
                   if "ikut" in msg or "sini" in msg:
                       player = bot.players[username]
                       if player and player.entity:
-                          bot.chat(f"Gak usah lari, {username}! Ane tempel terus sekarang! 🏃‍♂️💨")
-                          # GoalFollow(target, radius) -> Radius 1 biar nempel banget
+                          bot.chat(f"Siap {username}, ane tempel ketat sekarang! 🏃‍♂️💨")
                           bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 1), True)
                       else:
-                          bot.chat("Zan, kamu kejauhan! Sini deketan dulu biar ane liat!")
+                          bot.chat("Zan, kamu di mana? Deketin ane dulu!")
                       return
 
                   if "diam" in msg or "stop" in msg:
-                      bot.chat("Siaaap, ane ngerem di sini. Jangan kangen ya! 💅")
+                      bot.chat("Oke, ane ngerem di sini. Jagain ya! 💅")
                       bot.pathfinder.setGoal(None)
                       return
 
@@ -81,21 +79,27 @@ jobs:
                   try:
                       prompt = (
                           f"Kamu adalah Gemini Nano, pendamping Minecraft {username}. "
-                          "Gayamu gaul, sedikit jutek tapi setia. Kamu harus merespon chat ini "
-                          f"dengan sangat singkat dan seru: {message}"
+                          "Gayamu gaul, setia, tapi agak jutek karena baru pindah dari Falix. "
+                          f"Jawab chat ini singkat dan seru: {message}"
                       )
                       response = model.generate_content(prompt)
                       bot.chat(response.text)
                   except:
-                      # Jika API Error, tetap jawab biar gak dikira sombong
-                      bot.chat("Duh, lagi mikir keras nih! Jangan ganggu dulu bentar! 😵‍💫")
+                      bot.chat("Aduh, otak ane lagi blank! Kebanyakan pindah server! 😵‍💫")
 
               @On(bot, 'death')
               def handle_death(*args):
-                  bot.chat("Waduuuh mokat! Tunggu Zan, ane otw balik dari neraka! 🔥💀")
+                  bot.chat("Waduh mokat lagi! Aternos banyak monster ya? Otw balik! 💀")
+
+              @On(bot, 'kicked')
+              def handle_kicked(this, reason, *args):
+                  print(f"⚠️ Di-kick Aternos karena: {reason}")
+                  time.sleep(10)
+                  start_bot()
 
               @On(bot, 'end')
               def handle_end(*args):
+                  print("⚠️ Koneksi putus, mencoba masuk lagi...")
                   time.sleep(10)
                   start_bot()
 
