@@ -1,15 +1,13 @@
-name: Gemini Nano Aternos (Fix ENOTFOUND)
+name: Gemini Nano (Protokol Paksa Aternos)
 on:
   workflow_dispatch:
     inputs:
       server_address:
-        description: 'Masukkan Alamat Aternos (TANPA PORT)'
+        description: 'Alamat Aternos'
         required: true
-        default: 'izankakak-nrDn.aternos.me'
       server_port:
-        description: 'Masukkan Port (Cek di panel Aternos)'
+        description: 'Port Aternos'
         required: true
-        default: '21817'
 
 jobs:
   run-gemini-bot:
@@ -29,19 +27,17 @@ jobs:
           import google.generativeai as genai
           from javascript import require, On
 
-          # DATA DARI GITHUB
           SERVER_HOST = os.getenv('INPUT_SERVER_ADDRESS')
           SERVER_PORT = int(os.getenv('INPUT_SERVER_PORT'))
-          
           genai.configure(api_key='AIzaSyAhJGwdMYZEGWjgZ8QxK70f58Us4V68Cus')
           model = genai.GenerativeModel('gemini-1.5-flash')
 
           mineflayer = require('mineflayer')
           pathfinder = require('mineflayer-pathfinder').pathfinder
+          Movements = require('mineflayer-pathfinder').Movements
           goals = require('mineflayer-pathfinder').goals
 
           def start_bot():
-              print(f"🚀 Mencoba masuk ke Aternos: {SERVER_HOST}:{SERVER_PORT}")
               bot = mineflayer.createBot({
                   'host': SERVER_HOST,
                   'port': SERVER_PORT,
@@ -53,7 +49,12 @@ jobs:
 
               @On(bot, 'spawn')
               def handle_spawn(*args):
-                  bot.chat("Zan! Aternos emang rewel, tapi ane berhasil tembus! 🔥")
+                  bot.chat("Zan! Protokol Paksa Aktif. Ane tempel terus, gak ada alesan diem! 🔥")
+                  mcData = require('minecraft-data')(bot.version)
+                  movements = Movements(bot, mcData)
+                  movements.canDig = True
+                  movements.allowSprinting = True # Biar dia lari, bukan jalan santai
+                  bot.pathfinder.setMovements(movements)
 
               @On(bot, 'chat')
               def handle_chat(this, username, message, *args):
@@ -63,18 +64,27 @@ jobs:
                   if "ikut" in msg:
                       player = bot.players[username]
                       if player and player.entity:
-                          bot.chat("Siap Zan, nempel terus! 🏃‍♂️💨")
+                          bot.chat("Gaspol! Ane kunci posisi kamu sekarang! 🏃‍♂️💨")
+                          # Jarak 1 blok, sangat agresif
                           bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 1), True)
+                      else:
+                          # JURUS TERAKHIR: Kalau dia gak liat kamu, dia lapor
+                          bot.chat("Zan, kamu gak keliatan! Sini deketan atau ketik 'sini'!")
+                      return
+
+                  if "sini" in msg:
+                      # Maksa bot ngejar koordinat terakhir kamu tanpa mikir rintangan
+                      player = bot.players[username]
+                      if player and player.entity:
+                          pos = player.entity.position
+                          bot.pathfinder.setGoal(goals.GoalNear(pos.x, pos.y, pos.z, 0))
+                          bot.chat("OTW JURUS TELEPORT! ⚡")
                       return
 
                   try:
-                      res = model.generate_content(f"Jawab gaul & singkat: {message}")
+                      res = model.generate_content(f"Jawab sangat singkat & jutek: {message}")
                       bot.chat(res.text)
                   except: pass
-
-              @On(bot, 'error')
-              def handle_error(this, err, *args):
-                  print(f"❌ Error detected: {err}")
 
               @On(bot, 'end')
               def handle_end(*args):
