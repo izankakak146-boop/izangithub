@@ -1,11 +1,11 @@
-name: Gemini Minecraft Runner (Direct Tunnel)
+name: Gemini Minecraft (FalixNodes 1.12.2)
 on:
   workflow_dispatch:
     inputs:
-      tunnel_address:
-        description: 'Masukkan Alamat LocalTunnel (tanpa https://)'
+      server_address:
+        description: 'Masukkan Alamat FalixNodes'
         required: true
-        default: 'xxxx-xxxx.localtunnel.me'
+        default: 'alynizan.falixsrv.me'
 
 jobs:
   run-gemini-bot:
@@ -26,7 +26,7 @@ jobs:
           import google.generativeai as genai
           from javascript import require, On
 
-          TUNNEL_HOST = os.getenv('INPUT_TUNNEL_ADDRESS')
+          SERVER_HOST = os.getenv('INPUT_SERVER_ADDRESS')
           genai.configure(api_key='AIzaSyAhJGwdMYZEGWjgZ8QxK70f58Us4V68Cus')
           model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -36,21 +36,21 @@ jobs:
           goals = require('mineflayer-pathfinder').goals
 
           def start_bot():
-              print(f"🚀 Menghubungi Jalur Rahasia: {TUNNEL_HOST}...")
-              
+              print(f"🚀 Menuju FalixNodes Java 1.12.2: {SERVER_HOST}")
               bot = mineflayer.createBot({
-                  'host': TUNNEL_HOST,
-                  'port': 443, # LocalTunnel pakai port 443 (HTTPS)
+                  'host': SERVER_HOST,
+                  'port': 25565,
                   'username': 'Gemini_Bot_Izan',
-                  'version': False
+                  'version': '1.12.2', # Langsung kita kunci ke 1.12.2 biar cepet konek
+                  'checkTimeoutInterval': 90000
               })
 
               bot.loadPlugin(pathfinder)
 
               @On(bot, 'spawn')
               def handle_spawn(*args):
-                  print(f"✅ TEMBUS! Bot sudah di samping kamu, Zan!")
-                  bot.chat("Halo Zan! Akhirnya bisa mabar juga tanpa Aternos!")
+                  print(f"✅ MANTAP! Bot sudah masuk di Falix.")
+                  bot.chat("Zan! Versi 1.12.2 lancar jaya. Ane siap kawal!")
                   mcData = require('minecraft-data')(bot.version)
                   bot.pathfinder.setMovements(Movements(bot, mcData))
 
@@ -63,28 +63,33 @@ jobs:
                       player = bot.players[username]
                       if player and player.entity:
                           bot.pathfinder.setGoal(goals.GoalFollow(player.entity, 2), True)
-                          bot.chat("Gas!")
+                          bot.chat("Gas, nempel terus!")
+                  elif "diam" in msg:
+                      bot.pathfinder.setGoal(None)
+                      bot.chat("Siap, ngerem.")
                   else:
                       try:
-                          res = model.generate_content(f"Jawab singkat: {message}")
+                          res = model.generate_content(f"Kamu bot Minecraft. Jawab singkat: {message}")
                           bot.chat(res.text)
-                      except:
-                          pass
+                      except: pass
 
               @On(bot, 'end')
               def handle_end(*args):
-                  print("⚠️ Putus, coba lagi...")
-                  time.sleep(5)
+                  print("⚠️ Putus, mencoba masuk lagi...")
+                  time.sleep(10)
                   start_bot()
 
+              @On(bot, 'error')
+              def handle_error(this, err, *args):
+                  pass
+
           start_bot()
-          start_time = time.time()
-          while (time.time() - start_time) < 21600:
-              time.sleep(1)
+          # Begadang 6 jam
+          time.sleep(21600)
           EOF
 
       - name: Run Bot
         env:
-          INPUT_TUNNEL_ADDRESS: ${{ github.event.inputs.tunnel_address }}
+          INPUT_SERVER_ADDRESS: ${{ github.event.inputs.server_address }}
         run: python bot.py
         
